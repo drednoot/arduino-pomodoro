@@ -10,8 +10,8 @@ struct Time {
   Time& operator--()
   {
     if (seconds == 0) {
-      seconds = SECONDS_IN_MINUTE - 1;
       if (minutes != 0) {
+        seconds = SECONDS_IN_MINUTE - 1;
         --minutes;
       }
     } else {
