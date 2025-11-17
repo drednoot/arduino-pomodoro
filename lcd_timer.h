@@ -2,6 +2,7 @@
 #define ARDUINO_POMODORO_LCD_TIMER_H_
 
 #include "time.h"
+#include "timer_action.h"
 
 #include <LiquidCrystal_I2C.h>
 
@@ -40,12 +41,15 @@ byte POMO_CUSTOM_CHAR_POMODORO[8] = {
 
 class LcdTimer {
   public:
+    using LcdTimerTimerAction = TimerAction<void(LcdTimer::*)(), LcdTimer*>;
+
     LcdTimer(int i2c_addr, int width, int height) 
       : m_lcd(i2c_addr, width, height)
       , m_startTimerTextPos(width / 2 - POMO_TIMER_TEXT_SIZE / 2 - 1)
       , m_startCyclesTextPos(0)
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
       , m_time(Time { 15, 0 })
+      , m_countdown_action(1000, this, &LcdTimer::decrementTimer)
     {
     }
     void setup() {
@@ -58,6 +62,7 @@ class LcdTimer {
     }
 
     void sync() {
+      m_countdown_action.sync();
     }
 
     void drawTimer() {
@@ -91,12 +96,19 @@ class LcdTimer {
       }
     }
 
+    void decrementTimer() {
+      --m_time;
+      drawTimer();
+    }
+
     LiquidCrystal_I2C m_lcd;
     int m_startTimerTextPos;
     int m_startCyclesTextPos;
     int m_startPomodoroTextPos;
     Time m_time;
     uint8_t m_cycles;
+
+    LcdTimerTimerAction m_countdown_action;
 };
 
 #endif // ARDUINO_POMODORO_LCD_TIMER_H_
