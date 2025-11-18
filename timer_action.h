@@ -13,6 +13,8 @@ class TimerActionImpl {
 
     void sync()
     {
+      Serial.println(m_timer);
+      delay(1000);
       if (millis() - m_lastSnapshot >= m_timer) {
         m_lastSnapshot = millis();
         callAction();
@@ -31,6 +33,13 @@ class TimerActionImpl {
 template<typename Action, typename Caller = void>
 class TimerAction : public detail::TimerActionImpl {
   public:
+  TimerAction()
+    : detail::TimerActionImpl(0)
+    , m_caller(nullptr)
+    , m_action(nullptr)
+  {
+  }
+
   TimerAction(uint32_t timer, Caller caller, Action action)
     : detail::TimerActionImpl(timer)
     , m_caller(caller)
@@ -38,14 +47,18 @@ class TimerAction : public detail::TimerActionImpl {
   {
   }
 
+  size_t getCaller() {
+    return (size_t)m_caller;
+  }
+
+  private:
   virtual void callAction() override
   {
     (m_caller->*m_action)();
   }
 
-  private:
-    Caller m_caller;
-    Action m_action;
+  Caller m_caller;
+  Action m_action;
 };
 
 template<typename Action>
@@ -57,13 +70,13 @@ class TimerAction<Action, void> : public detail::TimerActionImpl {
   {
   }
 
+  private:
   virtual void callAction() override
   {
     m_action();
   }
 
-  private:
-    Action m_action;
+  Action m_action;
 };
 
 #endif // ARDUINO_POMODORO_TIMER_ACTION_H_
