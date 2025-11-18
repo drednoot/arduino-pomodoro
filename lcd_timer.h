@@ -3,6 +3,7 @@
 
 #include "time.h"
 #include "timer_action.h"
+#include "sync_array.h"
 
 #include <LiquidCrystal_I2C.h>
 
@@ -50,7 +51,12 @@ class LcdTimer {
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
       , m_time(Time { 15, 0 })
 
-      , m_decrementTimer(1000, this, &LcdTimer::decrementTimer)
+      , m_dotsVisible(true)
+
+      , m_timers(
+          LcdTimerTimerAction(1000, this, &LcdTimer::decrementTimer),
+          LcdTimerTimerAction(200, this, &LcdTimer::blinkDots))
+      // , m_decrementTimer(1000, this, &LcdTimer::decrementTimer)
     {
     }
     void setup() {
@@ -63,7 +69,7 @@ class LcdTimer {
     }
 
     void sync() {
-      m_decrementTimer.sync();
+      m_timers.sync();
     }
 
     void drawTimer() {
@@ -85,7 +91,11 @@ class LcdTimer {
   private:
     void printTimer() {
       printWithPadding(m_time.minutes, ' ');
-      m_lcd.print(POMO_TIMER_TEXT_COLON);
+      if (m_dotsVisible) {
+        m_lcd.print(POMO_TIMER_TEXT_COLON);
+      } else {
+        m_lcd.print(' ');
+      }
       printWithPadding(m_time.seconds, '0');
     }
     void printWithPadding(uint8_t n, char padding) {
@@ -102,6 +112,11 @@ class LcdTimer {
       drawTimer();
     }
 
+    void blinkDots() {
+      m_dotsVisible = !m_dotsVisible;
+      drawTimer();
+    }
+
     LiquidCrystal_I2C m_lcd;
     int m_startTimerTextPos;
     int m_startCyclesTextPos;
@@ -109,7 +124,10 @@ class LcdTimer {
     Time m_time;
     uint8_t m_cycles;
 
-    LcdTimerTimerAction m_decrementTimer;
+    boolean m_dotsVisible;
+
+    // LcdTimerTimerAction m_decrementTimer;
+    SyncArray<LcdTimerTimerAction, 2> m_timers;
 };
 
 #endif // ARDUINO_POMODORO_LCD_TIMER_H_
