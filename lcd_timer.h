@@ -49,7 +49,8 @@ class LcdTimer {
       , m_startCyclesTextPos(0)
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
       , m_time(Time { 15, 0 })
-      , m_countdown_action(1000, this, &LcdTimer::decrementTimer)
+
+      , m_decrementTimer(1000, this, &LcdTimer::decrementTimer)
     {
     }
     void setup() {
@@ -62,7 +63,7 @@ class LcdTimer {
     }
 
     void sync() {
-      m_countdown_action.sync();
+      m_decrementTimer.sync();
     }
 
     void drawTimer() {
@@ -108,7 +109,7 @@ class LcdTimer {
     Time m_time;
     uint8_t m_cycles;
 
-    LcdTimerTimerAction m_countdown_action;
+    LcdTimerTimerAction m_decrementTimer;
 };
 
 #endif // ARDUINO_POMODORO_LCD_TIMER_H_
