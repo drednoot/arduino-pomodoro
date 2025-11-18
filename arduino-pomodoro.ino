@@ -7,6 +7,7 @@ void setup() {
   lcd_timer.drawTimer();
   lcd_timer.drawCycles();
   lcd_timer.drawPomodoro();
+  Serial.begin(9600);
 }
 
 void loop() {
