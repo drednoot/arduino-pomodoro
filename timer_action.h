@@ -13,8 +13,6 @@ class TimerActionImpl {
 
     void sync()
     {
-      Serial.println(m_timer);
-      delay(1000);
       if (millis() - m_lastSnapshot >= m_timer) {
         m_lastSnapshot = millis();
         callAction();
