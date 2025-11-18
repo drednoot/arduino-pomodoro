@@ -22,12 +22,12 @@ class SyncArray {
 
   private:
     template<class ...Args>
-    initArray(Syncable&& first, Args&& ...rest)
+    void initArray(Syncable&& first, Args&& ...rest)
     {
       m_data[size - sizeof...(rest) - 1] = first;
       initArray(pomo::move(rest)...);
     }
-    initArray(Syncable&& last)
+    void initArray(Syncable&& last)
     {
       m_data[size - 1] = last;
     }
