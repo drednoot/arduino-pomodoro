@@ -1,16 +1,14 @@
 #ifndef ARDUINO_POMODORO_SYNC_ARRAY_H_
 #define ARDUINO_POMODORO_SYNC_ARRAY_H_
 
-#include "move.h"
-
 template<class Syncable, uint8_t size>
 class SyncArray {
   public:
     template<class ...Args>
-    SyncArray(Args&& ...args)
+    SyncArray(Args ...args)
     {
       static_assert(sizeof...(args) == size);
-      initArray(pomo::move(args)...);
+      initArray(args...);
     }
 
     void sync() 
@@ -22,12 +20,12 @@ class SyncArray {
 
   private:
     template<class ...Args>
-    void initArray(Syncable&& first, Args&& ...rest)
+    void initArray(Syncable first, Args ...rest)
     {
       m_data[size - sizeof...(rest) - 1] = first;
-      initArray(pomo::move(rest)...);
+      initArray(rest...);
     }
-    void initArray(Syncable&& last)
+    void initArray(Syncable last)
     {
       m_data[size - 1] = last;
     }
