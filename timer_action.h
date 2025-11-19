@@ -31,13 +31,6 @@ class TimerActionImpl {
 template<typename Action, typename Caller = void>
 class TimerAction : public detail::TimerActionImpl {
   public:
-  TimerAction()
-    : detail::TimerActionImpl(0)
-    , m_caller(nullptr)
-    , m_action(nullptr)
-  {
-  }
-
   TimerAction(uint32_t timer, Caller caller, Action action)
     : detail::TimerActionImpl(timer)
     , m_caller(caller)

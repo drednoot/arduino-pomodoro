@@ -3,7 +3,6 @@
 
 #include "time.h"
 #include "timer_action.h"
-#include "sync_array.h"
 
 #include <LiquidCrystal_I2C.h>
 
@@ -42,53 +41,67 @@ byte POMO_CUSTOM_CHAR_POMODORO[8] = {
 
 class LcdTimer {
   public:
-    using LcdTimerTimerAction = TimerAction<void(LcdTimer::*)(), LcdTimer*>;
-
     LcdTimer(int i2c_addr, int width, int height) 
       : m_lcd(i2c_addr, width, height)
       , m_startTimerTextPos(width / 2 - POMO_TIMER_TEXT_SIZE / 2 - 1)
       , m_startCyclesTextPos(0)
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
-      , m_time(Time { 15, 0 })
 
+      , m_time(Time {25, 0})
       , m_dotsVisible(true)
-
-      , m_timers(
-          LcdTimerTimerAction(1000, this, &LcdTimer::decrementTimer),
-          LcdTimerTimerAction(800, this, &LcdTimer::blinkDots))
     {
     }
-    void setup() {
+    void setup()
+    {
       m_lcd.init();
       m_lcd.backlight();
       m_lcd.clear();
 
       m_lcd.createChar(POMO_CUSTOM_CHAR_X_IDX, POMO_CUSTOM_CHAR_X);
       m_lcd.createChar(POMO_CUSTOM_CHAR_POMODORO_IDX, POMO_CUSTOM_CHAR_POMODORO);
+
+      drawTimer();
+      drawCycles(0);
+      drawPomodoro(0);
     }
 
-    void sync() {
-      m_timers.sync();
+    void setTime(Time time)
+    {
+      m_time = time;
+      drawTimer();
     }
 
-    void drawTimer() {
+    void setDotsVisible(boolean isVisible)
+    {
+      m_dotsVisible = isVisible;
+      drawTimer();
+    }
+
+  private:
+    void drawTimer()
+    {
       m_lcd.setCursor(m_startTimerTextPos, POMO_TIMER_TEXT_Y_POS);
       printTimer();
     }
-    void drawCycles() {
+    void drawCycles(uint8_t cycles)
+    {
       m_lcd.setCursor(m_startCyclesTextPos, POMO_CYCLES_TEXT_Y_POS);
       m_lcd.print(POMO_CYCLES_TEXT);
-      m_lcd.print(m_cycles % POMO_CYCLES_MAX_COUNT);
+      m_lcd.print(cycles % POMO_CYCLES_MAX_COUNT);
     }
-    void drawPomodoro() {
+    void drawPomodoro(uint8_t pomodoro)
+    {
       m_lcd.setCursor(m_startPomodoroTextPos, POMO_POMODORO_TEXT_Y_POS);
-      for (int i = 0; i < POMO_POMODORO_MAX_COUNT; ++i) {
+      for (int i = 0; i < pomodoro; ++i) {
+        m_lcd.write((byte)POMO_CUSTOM_CHAR_POMODORO_IDX);
+      }
+      for (int i = 0; i < POMO_POMODORO_MAX_COUNT - pomodoro; ++i) {
         m_lcd.write((byte)POMO_CUSTOM_CHAR_X_IDX);
       }
     }
 
-  private:
-    void printTimer() {
+    void printTimer()
+    {
       printWithPadding(m_time.minutes, ' ');
       if (m_dotsVisible) {
         m_lcd.print(POMO_TIMER_TEXT_COLON);
@@ -97,7 +110,8 @@ class LcdTimer {
       }
       printWithPadding(m_time.seconds, '0');
     }
-    void printWithPadding(uint8_t n, char padding) {
+    void printWithPadding(uint8_t n, char padding)
+    {
       if (n >= 10 || n < 0) {
         m_lcd.print(n % 100);
       } else {
@@ -106,26 +120,13 @@ class LcdTimer {
       }
     }
 
-    void decrementTimer() {
-      --m_time;
-      drawTimer();
-    }
-
-    void blinkDots() {
-      m_dotsVisible = !m_dotsVisible;
-      drawTimer();
-    }
-
     LiquidCrystal_I2C m_lcd;
     int m_startTimerTextPos;
     int m_startCyclesTextPos;
     int m_startPomodoroTextPos;
+
     Time m_time;
-    uint8_t m_cycles;
-
     boolean m_dotsVisible;
-
-    SyncArray<LcdTimerTimerAction, 2> m_timers;
 };
 
 #endif // ARDUINO_POMODORO_LCD_TIMER_H_

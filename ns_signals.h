@@ -1,0 +1,8 @@
+#ifndef ARDUINO_POMODORO_NS_SIGNALS_H_
+#define ARDUINO_POMODORO_NS_SIGNALS_H_
+
+enum Signals {
+  SIG_NO_SIGNAL = 0,
+};
+
+#endif // ARDUINO_POMODORO_NS_SIGNALS_H_

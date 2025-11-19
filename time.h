@@ -21,7 +21,7 @@ struct Time {
     return *this;
   }
 
-  operator boolean() const { return minutes > 0 && seconds > 0; }
+  boolean isZero() const { return !(minutes != 0 || seconds != 0); }
 };
 
 #endif // ARDUINO_POMODORO_TIME_H_
