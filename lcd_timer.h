@@ -55,8 +55,7 @@ class LcdTimer {
 
       , m_timers(
           LcdTimerTimerAction(1000, this, &LcdTimer::decrementTimer),
-          LcdTimerTimerAction(200, this, &LcdTimer::blinkDots))
-      // , m_decrementTimer(1000, this, &LcdTimer::decrementTimer)
+          LcdTimerTimerAction(800, this, &LcdTimer::blinkDots))
     {
     }
     void setup() {
@@ -126,7 +125,6 @@ class LcdTimer {
 
     boolean m_dotsVisible;
 
-    // LcdTimerTimerAction m_decrementTimer;
     SyncArray<LcdTimerTimerAction, 2> m_timers;
 };
 
