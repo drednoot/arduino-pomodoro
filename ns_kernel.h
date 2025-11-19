@@ -5,10 +5,12 @@
 #include "time.h"
 #include "ns_task.h"
 #include "task_timer_countdown.h"
+#include "task_timer_blink_dots.h"
 
 LcdTimer lcd_timer(0x27, 16, 2);
 
 TimerCountdown<25, 0> workTimerCountdown(&lcd_timer);
+BlinkDots blinkDots(&lcd_timer);
 
 enum State {
   STATE_AWAIT_BEGIN = 0,
@@ -35,8 +37,12 @@ class Kernel {
 
     void sync()
     {
-      for (int i = 0, size = m_tasks.size(); i < size; ++i) {
-        if (m_tasks[i]->isDone()) continue;
+      uint8_t doneCount = 0;
+      for (uint8_t i = 0, size = m_tasks.size(); i < size; ++i) {
+        if (m_tasks[i]->isDone()) {
+          ++doneCount;
+          if (!m_tasks[i]->syncWhenDone()) continue;
+        }
         m_tasks[i]->sync();
       }
     }
@@ -44,7 +50,7 @@ class Kernel {
   private:
     void setupTasks()
     {
-      for (int i = 0, size = m_tasks.size(); i < size; ++i) {
+      for (uint8_t i = 0, size = m_tasks.size(); i < size; ++i) {
         m_tasks[i]->setup();
       }
     }
@@ -57,6 +63,7 @@ class Kernel {
         break;
       case STATE_TIMER_COUNTDOWN:
         m_tasks.push(&workTimerCountdown);
+        m_tasks.push(&blinkDots);
         break;
       case STATE_PAUSE:
         break;
