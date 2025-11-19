@@ -28,9 +28,14 @@ class TimerCountdown : public Task {
       m_timerAction.sync();
     }
 
-    bool isDone() const override 
+    boolean isDone() const override
     {
       return m_time.isZero();
+    }
+
+    boolean syncWhenDone() const override
+    {
+      return false;
     }
 
   private:
