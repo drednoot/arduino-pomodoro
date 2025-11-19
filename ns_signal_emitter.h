@@ -1,0 +1,9 @@
+#ifndef ARDUINO_POMODORO_NS_SIGNAL_EMITTER_H_
+#define ARDUINO_POMODORO_NS_SIGNAL_EMITTER_H_
+
+class SignalEmitter {
+  public:
+
+};
+
+#endif // ARDUINO_POMODORO_NS_SIGNAL_EMITTER_H_

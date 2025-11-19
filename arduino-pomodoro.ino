@@ -1,15 +1,13 @@
-#include "lcd_timer.h"
+#include "ns_kernel.h"
 
-LcdTimer lcd_timer(0x27, 16, 2);
+Kernel<1> kernel;
 
 void setup() {
-  lcd_timer.setup();
-  lcd_timer.drawTimer();
-  lcd_timer.drawCycles();
-  lcd_timer.drawPomodoro();
   Serial.begin(9600);
+
+  kernel.setup();
 }
 
 void loop() {
-  lcd_timer.sync();
+  kernel.sync();
 }
