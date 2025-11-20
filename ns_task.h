@@ -1,7 +1,7 @@
 #ifndef ARDUINO_POMODORO_NS_TASK_H_
 #define ARDUINO_POMODORO_NS_TASK_H_
 
-#include "timer_action.h"
+#include "ns_timer_action.h"
 
 class Task {
   public:
