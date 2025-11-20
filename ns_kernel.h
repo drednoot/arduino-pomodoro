@@ -16,6 +16,9 @@ BlinkDots blinkDots(&lcdTimer);
 
 PushButton<11> pushButton;
 
+const static uint8_t maxTasks = 2;
+const static uint8_t maxSignalEmitters = 1;
+
 enum State {
   STATE_AWAIT_BEGIN = 0,
   STATE_TIMER_COUNTDOWN,
@@ -23,7 +26,6 @@ enum State {
   STATE_AWAIT_NEXT_CYCLE,
 };
 
-template<uint8_t maxTasks, uint8_t maxSignalEmitters>
 class Kernel {
   public:
     Kernel()
