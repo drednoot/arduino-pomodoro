@@ -1,6 +1,6 @@
 #include "ns_kernel.h"
 
-Kernel<2> kernel;
+Kernel<2, 1> kernel;
 
 void setup() {
   Serial.begin(9600);
