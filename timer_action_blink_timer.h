@@ -20,6 +20,7 @@ class BlinkTimer : public BlinkTimerTimerAction {
     void reset()
     {
       m_state = true;
+      m_lcdTimer->setTimerVisible(true);
       BlinkTimerTimerAction::reset();
     }
 
