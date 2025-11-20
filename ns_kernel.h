@@ -9,6 +9,7 @@
 #include "task_timer_blink_dots.h"
 #include "signal_emitter_push_button.h"
 #include "timer_action_blink_timer.h"
+#include "timer_action_blink_lcd_text.h"
 #include "once.h"
 
 LcdTimer lcdTimer(0x27, 16, 2);
@@ -19,6 +20,7 @@ BlinkDots blinkDots(&lcdTimer);
 PushButton<11> pushButton;
 
 BlinkTimer blinkTimer(&lcdTimer, 300);
+BlinkLcdText blinkText(&lcdTimer, 300);
 
 const static uint8_t maxTasks = 2;
 const static uint8_t maxSignalEmitters = 1;
@@ -107,7 +109,7 @@ class Kernel {
         blinkTimer.sync();
         break;
       case SIG_HARD_RESET:
-        Serial.println("hard reset");
+        blinkText.sync();
         break;
       case SIG_SHUTDOWN:
         Serial.println("sleep");
@@ -127,6 +129,7 @@ class Kernel {
     {
         if (m_signalOnce.set(signal)) {
           blinkTimer.reset();
+          blinkText.reset();
         }
     }
 
