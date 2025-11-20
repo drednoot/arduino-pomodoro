@@ -90,6 +90,15 @@ class LcdTimer {
       drawScreen();
     }
 
+    void setBacklightEnabled(boolean isEnabled)
+    {
+      if (isEnabled) {
+        m_lcd.backlight();
+      } else {
+        m_lcd.noBacklight();
+      }
+    }
+
   private:
     void drawScreen()
     {
