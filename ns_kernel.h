@@ -4,13 +4,17 @@
 #include "array.h"
 #include "time.h"
 #include "ns_task.h"
+#include "ns_signals.h"
 #include "task_timer_countdown.h"
 #include "task_timer_blink_dots.h"
+#include "signal_emitter_push_button.h"
 
-LcdTimer lcd_timer(0x27, 16, 2);
+LcdTimer lcdTimer(0x27, 16, 2);
 
-TimerCountdown<25, 0> workTimerCountdown(&lcd_timer);
-BlinkDots blinkDots(&lcd_timer);
+TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
+BlinkDots blinkDots(&lcdTimer);
+
+PushButton<11> pushButton;
 
 enum State {
   STATE_AWAIT_BEGIN = 0,
@@ -19,7 +23,7 @@ enum State {
   STATE_AWAIT_NEXT_CYCLE,
 };
 
-template<uint8_t max_tasks>
+template<uint8_t maxTasks, uint8_t maxSignalEmitters>
 class Kernel {
   public:
     Kernel()
@@ -30,13 +34,20 @@ class Kernel {
 
     void setup()
     {
-      lcd_timer.setup();
+      lcdTimer.setup();
+      pushButton.setup();
+      m_signalEmitters.push(&pushButton);
 
       setState(m_state);
     }
 
     void sync()
     {
+      for (uint8_t i = 0, size = m_signalEmitters.size(); i < size; ++i) {
+        m_signalEmitters[i]->sync();
+        handleSignals(m_signalEmitters[i]);
+      }
+
       uint8_t doneCount = 0;
       for (uint8_t i = 0, size = m_tasks.size(); i < size; ++i) {
         if (m_tasks[i]->isDone()) {
@@ -74,7 +85,42 @@ class Kernel {
       setupTasks();
     }
 
-    Array<Task*, max_tasks> m_tasks;
+    void handleSignals(SignalEmitter* signalEmitter)
+    {
+      Signal toHandle = signalEmitter->signals();
+      boolean buttonPushed = toHandle & SIG_BUTTON_PUSHED;
+      toHandle &= ~SIG_BUTTON_PUSHED;
+
+      switch (toHandle) {
+      case SIG_PAUSE:
+        if (!buttonPushed) break;
+        break;
+      case SIG_TIMER_RESET:
+        Serial.println("timer reset");
+        break;
+      case SIG_HARD_RESET:
+        Serial.println("hard reset");
+        break;
+      case SIG_SHUTDOWN:
+        Serial.println("sleep");
+        break;
+      case SIG_FULL_RESET:
+        Serial.println("reset");
+        break;
+      case SIG_BUTTON_PUSHED:
+      case SIG_NO_SIGNAL:
+        break;
+      }
+
+      signalEmitter->setSignalsHandled();
+    }
+
+    void handleSignal(Signal sig)
+    {
+    }
+
+    Array<Task*, maxTasks> m_tasks;
+    Array<SignalEmitter*, maxSignalEmitters> m_signalEmitters;
     State m_state;
 };
 

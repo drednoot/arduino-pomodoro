@@ -8,15 +8,25 @@ class TimerActionImpl {
     TimerActionImpl(uint32_t timer)
       : m_timer(timer)
       , m_lastSnapshot(0)
+      , m_isActive(true)
     {
     }
 
     void sync()
     {
+      if (!m_isActive) return;
       if (millis() - m_lastSnapshot >= m_timer) {
         m_lastSnapshot = millis();
         callAction();
       }
+    }
+
+    void setActive(boolean isActive)
+    {
+      if (isActive && !m_isActive) {
+        m_lastSnapshot = millis(); // prevent from immediate action call
+      }
+      m_isActive = isActive;
     }
 
   protected:
@@ -24,6 +34,7 @@ class TimerActionImpl {
 
     uint32_t m_timer;
     uint32_t m_lastSnapshot;
+    boolean m_isActive;
 };
 
 } // namespace detail
@@ -36,10 +47,6 @@ class TimerAction : public detail::TimerActionImpl {
     , m_caller(caller)
     , m_action(action)
   {
-  }
-
-  size_t getCaller() {
-    return (size_t)m_caller;
   }
 
   private:
