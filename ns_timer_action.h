@@ -1,5 +1,5 @@
-#ifndef ARDUINO_POMODORO_TIMER_ACTION_H_
-#define ARDUINO_POMODORO_TIMER_ACTION_H_
+#ifndef ARDUINO_POMODORO_NS_TIMER_ACTION_H_
+#define ARDUINO_POMODORO_NS_TIMER_ACTION_H_
 
 namespace detail {
 
@@ -8,25 +8,20 @@ class TimerActionImpl {
     TimerActionImpl(uint32_t timer)
       : m_timer(timer)
       , m_lastSnapshot(0)
-      , m_isActive(true)
     {
     }
 
     void sync()
     {
-      if (!m_isActive) return;
       if (millis() - m_lastSnapshot >= m_timer) {
         m_lastSnapshot = millis();
         callAction();
       }
     }
 
-    void setActive(boolean isActive)
+    void reset()
     {
-      if (isActive && !m_isActive) {
-        m_lastSnapshot = millis(); // prevent from immediate action call
-      }
-      m_isActive = isActive;
+      m_lastSnapshot = millis();
     }
 
   protected:
@@ -34,7 +29,6 @@ class TimerActionImpl {
 
     uint32_t m_timer;
     uint32_t m_lastSnapshot;
-    boolean m_isActive;
 };
 
 } // namespace detail
@@ -77,4 +71,4 @@ class TimerAction<Action, void> : public detail::TimerActionImpl {
   Action m_action;
 };
 
-#endif // ARDUINO_POMODORO_TIMER_ACTION_H_
+#endif // ARDUINO_POMODORO_NS_TIMER_ACTION_H_

@@ -2,7 +2,6 @@
 #define ARDUINO_POMODORO_LCD_TIMER_H_
 
 #include "time.h"
-#include "timer_action.h"
 
 #include <LiquidCrystal_I2C.h>
 
@@ -49,6 +48,7 @@ class LcdTimer {
 
       , m_time(Time {25, 0})
       , m_dotsVisible(true)
+      , m_timerVisible(true)
     {
     }
     void setup()
@@ -77,6 +77,12 @@ class LcdTimer {
       drawTimer();
     }
 
+    void setTimerVisible(boolean isVisible)
+    {
+      m_timerVisible = isVisible;
+      drawTimer();
+    }
+
   private:
     void drawTimer()
     {
@@ -102,6 +108,13 @@ class LcdTimer {
 
     void printTimer()
     {
+      if (!m_timerVisible) {
+        for (int i = 0; i < POMO_TIMER_TEXT_SIZE; ++i) {
+          m_lcd.print(' ');
+        }
+        return;
+      }
+
       printWithPadding(m_time.minutes, ' ');
       if (m_dotsVisible) {
         m_lcd.print(POMO_TIMER_TEXT_COLON);
@@ -127,6 +140,7 @@ class LcdTimer {
 
     Time m_time;
     boolean m_dotsVisible;
+    boolean m_timerVisible;
 };
 
 #endif // ARDUINO_POMODORO_LCD_TIMER_H_

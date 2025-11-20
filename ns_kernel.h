@@ -8,6 +8,8 @@
 #include "task_timer_countdown.h"
 #include "task_timer_blink_dots.h"
 #include "signal_emitter_push_button.h"
+#include "timer_action_blink_timer.h"
+#include "once.h"
 
 LcdTimer lcdTimer(0x27, 16, 2);
 
@@ -15,6 +17,8 @@ TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
 BlinkDots blinkDots(&lcdTimer);
 
 PushButton<11> pushButton;
+
+BlinkTimer blinkTimer(&lcdTimer, 300);
 
 const static uint8_t maxTasks = 2;
 const static uint8_t maxSignalEmitters = 1;
@@ -93,12 +97,14 @@ class Kernel {
       boolean buttonPushed = toHandle & SIG_BUTTON_PUSHED;
       toHandle &= ~SIG_BUTTON_PUSHED;
 
+      resetEffectTimers(toHandle);
+
       switch (toHandle) {
       case SIG_PAUSE:
         if (!buttonPushed) break;
         break;
       case SIG_TIMER_RESET:
-        Serial.println("timer reset");
+        blinkTimer.sync();
         break;
       case SIG_HARD_RESET:
         Serial.println("hard reset");
@@ -117,13 +123,17 @@ class Kernel {
       signalEmitter->setSignalsHandled();
     }
 
-    void handleSignal(Signal sig)
+    void resetEffectTimers(Signal signal)
     {
+        if (m_signalOnce.set(signal)) {
+          blinkTimer.reset();
+        }
     }
 
     Array<Task*, maxTasks> m_tasks;
     Array<SignalEmitter*, maxSignalEmitters> m_signalEmitters;
     State m_state;
+    Once<Signal> m_signalOnce;
 };
 
 #endif // ARDUINO_POMODORO_NS_KERNEL_H_
