@@ -10,6 +10,7 @@
 #include "signal_emitter_push_button.h"
 #include "timer_action_blink_timer.h"
 #include "timer_action_blink_lcd_text.h"
+#include "timer_action_blink_backlight.h"
 #include "once.h"
 
 LcdTimer lcdTimer(0x27, 16, 2);
@@ -21,6 +22,7 @@ PushButton<11> pushButton;
 
 BlinkTimer blinkTimer(&lcdTimer, 300);
 BlinkLcdText blinkText(&lcdTimer, 300);
+BlinkBacklight blinkBacklight(&lcdTimer, 300);
 
 const static uint8_t maxTasks = 2;
 const static uint8_t maxSignalEmitters = 1;
@@ -112,10 +114,10 @@ class Kernel {
         blinkText.sync();
         break;
       case SIG_SHUTDOWN:
-        Serial.println("sleep");
+        blinkBacklight.sync();
         break;
       case SIG_FULL_RESET:
-        Serial.println("reset");
+        // resetArduino();
         break;
       case SIG_BUTTON_PUSHED:
       case SIG_NO_SIGNAL:
@@ -130,6 +132,7 @@ class Kernel {
         if (m_signalOnce.set(signal)) {
           blinkTimer.reset();
           blinkText.reset();
+          blinkBacklight.reset();
         }
     }
 
