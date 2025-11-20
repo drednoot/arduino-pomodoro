@@ -13,6 +13,8 @@
 #include "timer_action_blink_backlight.h"
 #include "once.h"
 
+#define ARDUINO_RESET_PIN 10
+
 LcdTimer lcdTimer(0x27, 16, 2);
 
 TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
@@ -44,11 +46,15 @@ class Kernel {
 
     void setup()
     {
+      pinMode(ARDUINO_RESET_PIN, OUTPUT);
+      digitalWrite(ARDUINO_RESET_PIN, HIGH);
+
       lcdTimer.setup();
       pushButton.setup();
       m_signalEmitters.push(&pushButton);
 
       setState(m_state);
+
     }
 
     void sync()
@@ -117,7 +123,7 @@ class Kernel {
         blinkBacklight.sync();
         break;
       case SIG_FULL_RESET:
-        // resetArduino();
+        digitalWrite(ARDUINO_RESET_PIN, LOW);
         break;
       case SIG_BUTTON_PUSHED:
       case SIG_NO_SIGNAL:
