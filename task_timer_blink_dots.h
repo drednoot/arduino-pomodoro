@@ -5,13 +5,14 @@
 #include "lcd_timer.h"
 #include "ns_timer_action.h"
 
+template<uint32_t period>
 class BlinkDots : public Task {
   public:
     using BlinkDotsAction = TimerAction<void(BlinkDots::*)(), BlinkDots*>;
 
     BlinkDots(LcdTimer* lcdTimer)
       : m_lcdTimer(lcdTimer)
-      , m_blinkDotsAction(800, this, &BlinkDots::blinkDots)
+      , m_blinkDotsAction(period, this, &BlinkDots::blinkDots)
       , m_isDotsVisible(true)
     {
     }

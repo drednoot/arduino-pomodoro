@@ -4,14 +4,17 @@
 #include "ns_timer_action.h"
 #include "lcd_timer.h"
 
-class BlinkTimer;
+template<uint32_t period>
+class BlinkTimerAction;
 
-using BlinkTimerTimerAction = TimerAction<void(BlinkTimer::*)(), BlinkTimer*>;
+template<uint32_t period>
+using BlinkTimerTimerAction = TimerAction<void(BlinkTimerAction<period>::*)(), BlinkTimerAction<period>*>;
 
-class BlinkTimer : public BlinkTimerTimerAction {
+template<uint32_t period>
+class BlinkTimerAction : public BlinkTimerTimerAction<period> {
   public:
-    BlinkTimer(LcdTimer* lcdTimer, uint32_t time)
-      : BlinkTimerTimerAction(time, this, &BlinkTimer::blink)
+    BlinkTimerAction(LcdTimer* lcdTimer)
+      : BlinkTimerTimerAction<period>(period, this, &BlinkTimerAction<period>::blink)
       , m_lcdTimer(lcdTimer)
       , m_state(true)
     {
@@ -21,7 +24,7 @@ class BlinkTimer : public BlinkTimerTimerAction {
     {
       m_state = true;
       m_lcdTimer->setTimerVisible(true);
-      BlinkTimerTimerAction::reset();
+      BlinkTimerTimerAction<period>::reset();
     }
 
   private:

@@ -20,30 +20,32 @@
 LcdTimer lcdTimer(0x27, 16, 2);
 
 TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
-BlinkDots blinkDots(&lcdTimer);
+BlinkDots<800> blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
 
 PushButton<11> pushButton;
 
-BlinkTimer blinkTimer(&lcdTimer, 300);
-BlinkLcdText blinkText(&lcdTimer, 300);
-BlinkBacklight blinkBacklight(&lcdTimer, 300);
+BlinkTimerAction<300> blinkTimerAction(&lcdTimer);
+BlinkLcdTextAction<300> blinkTextAction(&lcdTimer);
+BlinkBacklightAction<300> blinkBacklightAction(&lcdTimer);
 
 const static uint8_t maxTasks = 3;
 const static uint8_t maxSignalEmitters = 1;
 
 enum State {
   STATE_AWAIT_NEXT_CYCLE = 0,
-  STATE_TIMER_COUNTDOWN,
-  STATE_PAUSE,
+  STATE_WORK_TIMER_COUNTDOWN,
+  STATE_REST_TIMER_COUNTDOWN,
+  STATE_WORK_PAUSE,
+  STATE_REST_PAUSE,
+  // STATE_SLEEP, possibly?
 };
 
 class Kernel {
   public:
     Kernel()
       : m_state { STATE_AWAIT_NEXT_CYCLE }
-      , m_isWork { true }
     {
     }
 
@@ -96,15 +98,13 @@ class Kernel {
         lcdTimer.setBacklightEnabled(true);
         m_tasks.push(&blinkDots);
         break;
-      case STATE_TIMER_COUNTDOWN:
+      case STATE_WORK_TIMER_COUNTDOWN:
         m_tasks.push(&workTimerCountdown);
         m_tasks.push(&blinkDots);
         m_tasks.push(&backlight);
         break;
-      // case STATE_PAUSE:
-      //   break;
-      // case STATE_AWAIT_NEXT_CYCLE:
-      //   break;
+      case STATE_WORK_PAUSE:
+        break;
       }
       m_state = state;
       setupTasks();
@@ -115,14 +115,9 @@ class Kernel {
       switch(m_state) {
       case STATE_AWAIT_NEXT_CYCLE:
         break;
-      case STATE_TIMER_COUNTDOWN:
-        m_isWork = false;
-        setState(STATE_TIMER_COUNTDOWN);
+      case STATE_WORK_TIMER_COUNTDOWN:
+        setState(STATE_REST_TIMER_COUNTDOWN);
         break;
-      // case STATE_PAUSE:
-      //   break;
-      // case STATE_AWAIT_NEXT_CYCLE:
-      //   break;
       }
     }
 
@@ -139,13 +134,13 @@ class Kernel {
         if (buttonPushed) handlePauseSignal();
         break;
       case SIG_TIMER_RESET:
-        if (!buttonPushed) blinkTimer.sync();
+        if (!buttonPushed) blinkTimerAction.sync();
         break;
       case SIG_HARD_RESET:
-        if (!buttonPushed) blinkText.sync();
+        if (!buttonPushed) blinkTextAction.sync();
         break;
       case SIG_SHUTDOWN:
-        if (!buttonPushed) blinkBacklight.sync();
+        if (!buttonPushed) blinkBacklightAction.sync();
         break;
       case SIG_FULL_RESET:
         digitalWrite(ARDUINO_RESET_PIN, LOW);
@@ -161,9 +156,9 @@ class Kernel {
     void resetEffectTimers(Signals signals)
     {
         if (m_signalsOnce.set(signals)) {
-          blinkTimer.reset();
-          blinkText.reset();
-          blinkBacklight.reset();
+          blinkTimerAction.reset();
+          blinkTextAction.reset();
+          blinkBacklightAction.reset();
         }
     }
 
@@ -171,15 +166,11 @@ class Kernel {
     {
       switch(m_state) {
       case STATE_AWAIT_NEXT_CYCLE:
-        setState(STATE_TIMER_COUNTDOWN);
+        setState(STATE_WORK_TIMER_COUNTDOWN);
         break;
-      case STATE_TIMER_COUNTDOWN:
-        setState(STATE_PAUSE);
+      case STATE_WORK_TIMER_COUNTDOWN:
+        setState(STATE_WORK_PAUSE);
         break;
-      // case STATE_PAUSE:
-      //   break;
-      // case STATE_AWAIT_NEXT_CYCLE:
-      //   break;
       }
     }
 
@@ -187,8 +178,6 @@ class Kernel {
     Array<SignalEmitter*, maxSignalEmitters> m_signalEmitters;
     State m_state;
     Once<uint16_t> m_signalsOnce;
-
-    boolean m_isWork;
 };
 
 #endif // ARDUINO_POMODORO_NS_KERNEL_H_
