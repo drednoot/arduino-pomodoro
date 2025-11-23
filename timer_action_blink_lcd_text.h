@@ -31,8 +31,8 @@ class BlinkLcdText : public BlinkLcdTextAction {
       m_lcdTimer->setTextVisible(m_state);
     }
 
-    boolean m_state;
     LcdTimer* m_lcdTimer;
+    boolean m_state;
 };
 
 #endif // ARDUINO_POMODORO_TIMER_ACTION_BLINK_LCD_TEXT_H_

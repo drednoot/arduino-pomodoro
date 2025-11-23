@@ -31,8 +31,8 @@ class BlinkTimer : public BlinkTimerTimerAction {
       m_lcdTimer->setTimerVisible(m_state);
     }
 
-    boolean m_state;
     LcdTimer* m_lcdTimer;
+    boolean m_state;
 };
 
 #endif // ARDUINO_POMODORO_TIMER_ACTION_BLINK_TIMER_H_

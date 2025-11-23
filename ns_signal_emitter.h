@@ -6,7 +6,7 @@
 class SignalEmitter {
   public:
     virtual void sync() = 0;
-    virtual Signal signals() = 0;
+    virtual Signals signals() = 0;
     virtual void setSignalsHandled() = 0;
 };
 

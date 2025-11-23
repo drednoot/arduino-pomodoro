@@ -97,10 +97,10 @@ class Kernel {
         m_tasks.push(&workTimerCountdown);
         m_tasks.push(&blinkDots);
         break;
-      case STATE_PAUSE:
-        break;
-      case STATE_AWAIT_NEXT_CYCLE:
-        break;
+      // case STATE_PAUSE:
+      //   break;
+      // case STATE_AWAIT_NEXT_CYCLE:
+      //   break;
       }
       m_state = state;
       setupTasks();
@@ -109,26 +109,26 @@ class Kernel {
     void proposeAllTasksFinished()
     {
       switch(m_state) {
-      case STATE_AWAIT_BEGIN:
-        break;
-      case STATE_TIMER_COUNTDOWN:
-        break;
-      case STATE_PAUSE:
-        break;
-      case STATE_AWAIT_NEXT_CYCLE:
-        break;
+      // case STATE_AWAIT_BEGIN:
+      //   break;
+      // case STATE_TIMER_COUNTDOWN:
+      //   break;
+      // case STATE_PAUSE:
+      //   break;
+      // case STATE_AWAIT_NEXT_CYCLE:
+      //   break;
       }
     }
 
     void handleSignals(SignalEmitter* signalEmitter)
     {
-      Signal toHandle = signalEmitter->signals();
+      Signals toHandle = signalEmitter->signals();
       boolean buttonPushed = toHandle & SIG_BUTTON_PUSHED;
       toHandle &= ~SIG_BUTTON_PUSHED;
 
       resetEffectTimers(toHandle);
 
-      switch (toHandle) {
+      switch (static_cast<Signal>(toHandle)) {
       case SIG_PAUSE:
         if (buttonPushed) {
           handlePauseSignal();
@@ -154,9 +154,9 @@ class Kernel {
       signalEmitter->setSignalsHandled();
     }
 
-    void resetEffectTimers(Signal signal)
+    void resetEffectTimers(Signals signals)
     {
-        if (m_signalOnce.set(signal)) {
+        if (m_signalsOnce.set(signals)) {
           blinkTimer.reset();
           blinkText.reset();
           blinkBacklight.reset();
@@ -181,7 +181,7 @@ class Kernel {
     Array<Task*, maxTasks> m_tasks;
     Array<SignalEmitter*, maxSignalEmitters> m_signalEmitters;
     State m_state;
-    Once<Signal> m_signalOnce;
+    Once<uint16_t> m_signalsOnce;
 };
 
 #endif // ARDUINO_POMODORO_NS_KERNEL_H_

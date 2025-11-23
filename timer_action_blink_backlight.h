@@ -31,8 +31,8 @@ class BlinkBacklight : public BlinkBacklightAction {
       m_lcdTimer->setBacklightEnabled(m_state);
     }
 
-    boolean m_state;
     LcdTimer* m_lcdTimer;
+    boolean m_state;
 };
 
 #endif // ARDUINO_POMODORO_TIMER_ACTION_BLINK_BACKLIGHT_H_

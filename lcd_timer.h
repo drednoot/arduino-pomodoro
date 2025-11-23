@@ -131,7 +131,7 @@ class LcdTimer {
     }
     void printWithPadding(uint8_t n, char padding)
     {
-      if (n >= 10 || n < 0) {
+      if (n >= 10) {
         m_lcd.print(n % 100);
       } else {
         m_lcd.print(padding);

@@ -14,4 +14,6 @@ enum Signal {
   SIG_MAX = SIG_BUTTON_PUSHED,
 };
 
+using Signals = uint16_t;
+
 #endif // ARDUINO_POMODORO_SIGNALS_H_

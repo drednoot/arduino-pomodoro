@@ -9,7 +9,7 @@ template<uint8_t pin>
 class PushButton : public SignalEmitter {
   public:
     PushButton()
-      : m_emittingSignal(SIG_NO_SIGNAL)
+      : m_emittingSignals(SIG_NO_SIGNAL)
       , m_wasPushed(false)
     {
     }
@@ -22,7 +22,7 @@ class PushButton : public SignalEmitter {
     void sync() override
     {
       boolean pushed = !digitalRead(pin);
-      Signal signal = SIG_NO_SIGNAL;
+      Signals signal = SIG_NO_SIGNAL;
 
       if (pushed != m_wasPushed) {
         m_wasPushed = pushed;
@@ -37,19 +37,19 @@ class PushButton : public SignalEmitter {
         signal |= signalAccordingToTimePassed();
       }
 
-      if (m_emittingSignal == SIG_NO_SIGNAL) {
-        m_emittingSignal = signal;
+      if (m_emittingSignals == SIG_NO_SIGNAL) {
+        m_emittingSignals = signal;
       }
     }
 
-    Signal signals() override
+    Signals signals() override
     {
-      return m_emittingSignal;
+      return m_emittingSignals;
     }
 
     void setSignalsHandled() override
     {
-      m_emittingSignal = SIG_NO_SIGNAL;
+      m_emittingSignals = SIG_NO_SIGNAL;
     }
 
   private:
@@ -64,7 +64,7 @@ class PushButton : public SignalEmitter {
     }
 
     Timer m_timer;
-    Signal m_emittingSignal;
+    Signals m_emittingSignals;
     boolean m_wasPushed;
 };
 

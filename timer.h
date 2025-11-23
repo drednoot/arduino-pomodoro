@@ -17,6 +17,8 @@ class Timer {
     {
       uint32_t delta = millis() - m_startTime;
       m_startTime = 0;
+
+      return delta;
     }
 
     uint32_t timePassed()
