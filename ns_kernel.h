@@ -7,6 +7,7 @@
 #include "ns_signals.h"
 #include "task_timer_countdown.h"
 #include "task_timer_blink_dots.h"
+#include "task_buzzer.h"
 #include "signal_emitter_push_button.h"
 #include "timer_action_blink_timer.h"
 #include "timer_action_blink_lcd_text.h"
@@ -19,6 +20,7 @@ LcdTimer lcdTimer(0x27, 16, 2);
 
 TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
 BlinkDots blinkDots(&lcdTimer);
+Buzzer<12, 150, 5000, 440> buzzer;
 
 PushButton<11> pushButton;
 
@@ -26,7 +28,7 @@ BlinkTimer blinkTimer(&lcdTimer, 300);
 BlinkLcdText blinkText(&lcdTimer, 300);
 BlinkBacklight blinkBacklight(&lcdTimer, 300);
 
-const static uint8_t maxTasks = 2;
+const static uint8_t maxTasks = 3;
 const static uint8_t maxSignalEmitters = 1;
 
 enum State {
@@ -91,6 +93,7 @@ class Kernel {
       case STATE_TIMER_COUNTDOWN:
         m_tasks.push(&workTimerCountdown);
         m_tasks.push(&blinkDots);
+        m_tasks.push(&buzzer);
         break;
       case STATE_PAUSE:
         break;
@@ -114,13 +117,13 @@ class Kernel {
         if (!buttonPushed) break;
         break;
       case SIG_TIMER_RESET:
-        blinkTimer.sync();
+        if (!buttonPushed) blinkTimer.sync();
         break;
       case SIG_HARD_RESET:
-        blinkText.sync();
+        if (!buttonPushed) blinkText.sync();
         break;
       case SIG_SHUTDOWN:
-        blinkBacklight.sync();
+        if (!buttonPushed) blinkBacklight.sync();
         break;
       case SIG_FULL_RESET:
         digitalWrite(ARDUINO_RESET_PIN, LOW);
