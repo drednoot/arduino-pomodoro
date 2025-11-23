@@ -8,6 +8,7 @@
 #include "task_timer_countdown.h"
 #include "task_timer_blink_dots.h"
 #include "task_buzzer.h"
+#include "task_backlight.h"
 #include "signal_emitter_push_button.h"
 #include "timer_action_blink_timer.h"
 #include "timer_action_blink_lcd_text.h"
@@ -21,6 +22,7 @@ LcdTimer lcdTimer(0x27, 16, 2);
 TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
 BlinkDots blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
+Backlight<10000> backlight(&lcdTimer);
 
 PushButton<11> pushButton;
 
@@ -32,16 +34,16 @@ const static uint8_t maxTasks = 3;
 const static uint8_t maxSignalEmitters = 1;
 
 enum State {
-  STATE_AWAIT_BEGIN = 0,
+  STATE_AWAIT_NEXT_CYCLE = 0,
   STATE_TIMER_COUNTDOWN,
   STATE_PAUSE,
-  STATE_AWAIT_NEXT_CYCLE,
 };
 
 class Kernel {
   public:
     Kernel()
-      : m_state { STATE_AWAIT_BEGIN }
+      : m_state { STATE_AWAIT_NEXT_CYCLE }
+      , m_isWork { true }
     {
     }
 
@@ -90,12 +92,14 @@ class Kernel {
     {
       m_tasks.clear();
       switch(state) {
-      case STATE_AWAIT_BEGIN:
+      case STATE_AWAIT_NEXT_CYCLE:
+        lcdTimer.setBacklightEnabled(true);
         m_tasks.push(&blinkDots);
         break;
       case STATE_TIMER_COUNTDOWN:
         m_tasks.push(&workTimerCountdown);
         m_tasks.push(&blinkDots);
+        m_tasks.push(&backlight);
         break;
       // case STATE_PAUSE:
       //   break;
@@ -109,10 +113,12 @@ class Kernel {
     void proposeAllTasksFinished()
     {
       switch(m_state) {
-      // case STATE_AWAIT_BEGIN:
-      //   break;
-      // case STATE_TIMER_COUNTDOWN:
-      //   break;
+      case STATE_AWAIT_NEXT_CYCLE:
+        break;
+      case STATE_TIMER_COUNTDOWN:
+        m_isWork = false;
+        setState(STATE_TIMER_COUNTDOWN);
+        break;
       // case STATE_PAUSE:
       //   break;
       // case STATE_AWAIT_NEXT_CYCLE:
@@ -130,9 +136,7 @@ class Kernel {
 
       switch (static_cast<Signal>(toHandle)) {
       case SIG_PAUSE:
-        if (buttonPushed) {
-          handlePauseSignal();
-        }
+        if (buttonPushed) handlePauseSignal();
         break;
       case SIG_TIMER_RESET:
         if (!buttonPushed) blinkTimer.sync();
@@ -166,11 +170,12 @@ class Kernel {
     void handlePauseSignal()
     {
       switch(m_state) {
-      case STATE_AWAIT_BEGIN:
+      case STATE_AWAIT_NEXT_CYCLE:
         setState(STATE_TIMER_COUNTDOWN);
         break;
-      // case STATE_TIMER_COUNTDOWN:
-      //   break;
+      case STATE_TIMER_COUNTDOWN:
+        setState(STATE_PAUSE);
+        break;
       // case STATE_PAUSE:
       //   break;
       // case STATE_AWAIT_NEXT_CYCLE:
@@ -182,6 +187,8 @@ class Kernel {
     Array<SignalEmitter*, maxSignalEmitters> m_signalEmitters;
     State m_state;
     Once<uint16_t> m_signalsOnce;
+
+    boolean m_isWork;
 };
 
 #endif // ARDUINO_POMODORO_NS_KERNEL_H_

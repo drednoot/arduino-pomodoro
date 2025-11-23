@@ -3,6 +3,7 @@
 
 #include "ns_task.h"
 #include "lcd_timer.h"
+#include "ns_timer_action.h"
 
 class BlinkDots : public Task {
   public:
