@@ -29,12 +29,12 @@ class PushButton : public SignalEmitter {
         if (pushed) {
           m_timer.start();
         } else {
-          m_emittingSignal |= SIG_BUTTON_PUSHED;
+          signal |= SIG_BUTTON_PUSHED | signalAccordingToTimePassed();
         }
       }
 
       if (pushed) {
-        m_emittingSignal |= signalAccordingToTimePassed();
+        signal |= signalAccordingToTimePassed();
       }
 
       if (m_emittingSignal == SIG_NO_SIGNAL) {

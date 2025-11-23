@@ -41,8 +41,7 @@ enum State {
 class Kernel {
   public:
     Kernel()
-      // TODO: set STATE_AWAIT_BEGIN
-      : m_state { STATE_TIMER_COUNTDOWN }
+      : m_state { STATE_AWAIT_BEGIN }
     {
     }
 
@@ -56,7 +55,6 @@ class Kernel {
       m_signalEmitters.push(&pushButton);
 
       setState(m_state);
-
     }
 
     void sync()
@@ -74,6 +72,10 @@ class Kernel {
         }
         m_tasks[i]->sync();
       }
+
+      if (doneCount == m_tasks.size()) {
+        proposeAllTasksFinished();
+      }
     }
 
   private:
@@ -89,11 +91,11 @@ class Kernel {
       m_tasks.clear();
       switch(state) {
       case STATE_AWAIT_BEGIN:
+        m_tasks.push(&blinkDots);
         break;
       case STATE_TIMER_COUNTDOWN:
         m_tasks.push(&workTimerCountdown);
         m_tasks.push(&blinkDots);
-        m_tasks.push(&buzzer);
         break;
       case STATE_PAUSE:
         break;
@@ -102,6 +104,20 @@ class Kernel {
       }
       m_state = state;
       setupTasks();
+    }
+
+    void proposeAllTasksFinished()
+    {
+      switch(m_state) {
+      case STATE_AWAIT_BEGIN:
+        break;
+      case STATE_TIMER_COUNTDOWN:
+        break;
+      case STATE_PAUSE:
+        break;
+      case STATE_AWAIT_NEXT_CYCLE:
+        break;
+      }
     }
 
     void handleSignals(SignalEmitter* signalEmitter)
@@ -114,7 +130,9 @@ class Kernel {
 
       switch (toHandle) {
       case SIG_PAUSE:
-        if (!buttonPushed) break;
+        if (buttonPushed) {
+          handlePauseSignal();
+        }
         break;
       case SIG_TIMER_RESET:
         if (!buttonPushed) blinkTimer.sync();
@@ -143,6 +161,21 @@ class Kernel {
           blinkText.reset();
           blinkBacklight.reset();
         }
+    }
+
+    void handlePauseSignal()
+    {
+      switch(m_state) {
+      case STATE_AWAIT_BEGIN:
+        setState(STATE_TIMER_COUNTDOWN);
+        break;
+      // case STATE_TIMER_COUNTDOWN:
+      //   break;
+      // case STATE_PAUSE:
+      //   break;
+      // case STATE_AWAIT_NEXT_CYCLE:
+      //   break;
+      }
     }
 
     Array<Task*, maxTasks> m_tasks;
