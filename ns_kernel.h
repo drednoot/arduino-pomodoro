@@ -92,6 +92,7 @@ class Kernel {
   private:
     void setState(State state)
     {
+      Serial.println(state);
       m_tasks.clear();
       switch(state) {
       case STATE_AWAIT_FIRST_CYCLE:
@@ -131,6 +132,11 @@ class Kernel {
 
         buzzer.setup();
         m_tasks.push(&buzzer);
+        break;
+      case STATE_REST_PAUSE:
+        blinkTimer.setup();
+        m_tasks.push(&blinkTimer);
+        break;
       }
       m_state = state;
     }
@@ -139,9 +145,14 @@ class Kernel {
     {
       switch(m_state) {
       case STATE_AWAIT_FIRST_CYCLE:
+      case STATE_WORK_PAUSE:
+      case STATE_REST_PAUSE:
         break;
       case STATE_WORK_TIMER_COUNTDOWN:
         setState(STATE_REST_TIMER_COUNTDOWN);
+        break;
+      case STATE_REST_TIMER_COUNTDOWN:
+        setState(STATE_AWAIT_NEXT_CYCLE);
         break;
       }
     }
@@ -205,8 +216,14 @@ class Kernel {
       case STATE_WORK_TIMER_COUNTDOWN:
         setState(STATE_WORK_PAUSE);
         break;
+      case STATE_REST_TIMER_COUNTDOWN:
+        setState(STATE_REST_PAUSE);
+        break;
       case STATE_WORK_PAUSE:
         setState(STATE_WORK_TIMER_COUNTDOWN);
+        break;
+      case STATE_REST_PAUSE:
+        setState(STATE_REST_TIMER_COUNTDOWN);
         break;
       }
     }
