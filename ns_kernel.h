@@ -22,6 +22,7 @@ LcdTimer lcdTimer(0x27, 16, 2, Time {0, 10});
 
 TimerCountdown<0, 10> workTimerCountdown(&lcdTimer);
 TimerCountdown<0, 10> restTimerCountdown(&lcdTimer);
+TimerCountdown<0, 15> longRestTimerCountdown(&lcdTimer);
 BlinkDots<800> blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
@@ -120,10 +121,20 @@ class Kernel {
         break;
       case STATE_REST_TIMER_COUNTDOWN:
         if (m_state != STATE_REST_PAUSE) {
-          restTimerCountdown.setup();
+          if (lcdTimer.pomodoro() == POMO_POMODORO_MAX_COUNT) {
+            longRestTimerCountdown.setup();
+          } else {
+            restTimerCountdown.setup();
+          }
+          
           buzzer.setup();
         }
-        m_tasks.push(&restTimerCountdown);
+        if (lcdTimer.pomodoro() == POMO_POMODORO_MAX_COUNT) {
+          m_tasks.push(&longRestTimerCountdown);
+        } else {
+          m_tasks.push(&restTimerCountdown);
+        }
+
         m_tasks.push(&buzzer);
 
         lcdTimer.setIsWork(false);
