@@ -9,6 +9,7 @@
 #include "task_timer_blink_dots.h"
 #include "task_buzzer.h"
 #include "task_backlight.h"
+#include "task_blink_timer.h"
 #include "signal_emitter_push_button.h"
 #include "timer_action_blink_timer.h"
 #include "timer_action_blink_lcd_text.h"
@@ -23,6 +24,7 @@ TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
 BlinkDots<800> blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
+BlinkTimer<500> blinkTimer(&lcdTimer);
 
 PushButton<11> pushButton;
 
@@ -104,6 +106,7 @@ class Kernel {
         m_tasks.push(&backlight);
         break;
       case STATE_WORK_PAUSE:
+        m_tasks.push(&blinkTimer);
         break;
       }
       m_state = state;
@@ -155,11 +158,11 @@ class Kernel {
 
     void resetEffectTimers(Signals signals)
     {
-        if (m_signalsOnce.set(signals)) {
-          blinkTimerAction.reset();
-          blinkTextAction.reset();
-          blinkBacklightAction.reset();
-        }
+      if (m_signalsOnce.set(signals)) {
+        blinkTimerAction.reset();
+        blinkTextAction.reset();
+        blinkBacklightAction.reset();
+      }
     }
 
     void handlePauseSignal()
@@ -170,6 +173,9 @@ class Kernel {
         break;
       case STATE_WORK_TIMER_COUNTDOWN:
         setState(STATE_WORK_PAUSE);
+        break;
+      case STATE_WORK_PAUSE:
+        setState(STATE_WORK_TIMER_COUNTDOWN);
         break;
       }
     }
