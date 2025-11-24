@@ -207,7 +207,24 @@ class Kernel {
         if (buttonPushed) handlePauseSignal();
         break;
       case SIG_TIMER_RESET:
-        if (!buttonPushed) blinkTimerAction.sync();
+        if (buttonPushed) {
+          switch(m_state) {
+          case STATE_AWAIT_FIRST_CYCLE:
+          case STATE_AWAIT_NEXT_CYCLE:
+            break;
+          case STATE_WORK_TIMER_COUNTDOWN:
+          case STATE_WORK_PAUSE:
+            workTimerCountdown.setup();
+            break;
+          case STATE_REST_TIMER_COUNTDOWN:
+          case STATE_REST_PAUSE:
+            restTimerCountdown.setup();
+            longRestTimerCountdown.setup();
+            break;
+          }
+        } else {
+          blinkTimerAction.sync();
+        }
         break;
       case SIG_HARD_RESET:
         if (!buttonPushed) blinkTextAction.sync();
