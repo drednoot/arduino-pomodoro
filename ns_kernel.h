@@ -18,9 +18,10 @@
 
 #define ARDUINO_RESET_PIN 10
 
-LcdTimer lcdTimer(0x27, 16, 2);
+LcdTimer lcdTimer(0x27, 16, 2, Time {0, 10});
 
-TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
+TimerCountdown<0, 10> workTimerCountdown(&lcdTimer);
+TimerCountdown<5, 0> restTimerCountdown(&lcdTimer);
 BlinkDots<800> blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
@@ -32,11 +33,12 @@ BlinkTimerAction<300> blinkTimerAction(&lcdTimer);
 BlinkLcdTextAction<300> blinkTextAction(&lcdTimer);
 BlinkBacklightAction<300> blinkBacklightAction(&lcdTimer);
 
-const static uint8_t maxTasks = 3;
+const static uint8_t maxTasks = 4;
 const static uint8_t maxSignalEmitters = 1;
 
 enum State {
-  STATE_AWAIT_NEXT_CYCLE = 0,
+  STATE_AWAIT_FIRST_CYCLE = 0,
+  STATE_AWAIT_NEXT_CYCLE,
   STATE_WORK_TIMER_COUNTDOWN,
   STATE_REST_TIMER_COUNTDOWN,
   STATE_WORK_PAUSE,
@@ -47,7 +49,7 @@ enum State {
 class Kernel {
   public:
     Kernel()
-      : m_state { STATE_AWAIT_NEXT_CYCLE }
+      : m_state { STATE_AWAIT_FIRST_CYCLE }
     {
     }
 
@@ -89,16 +91,19 @@ class Kernel {
     {
       m_tasks.clear();
       switch(state) {
-      case STATE_AWAIT_NEXT_CYCLE:
+      case STATE_AWAIT_FIRST_CYCLE:
         lcdTimer.setBacklightEnabled(true);
+
         blinkDots.setup();
         m_tasks.push(&blinkDots);
         break;
       case STATE_WORK_TIMER_COUNTDOWN:
         if (m_state != STATE_WORK_PAUSE) workTimerCountdown.setup();
         m_tasks.push(&workTimerCountdown);
+
         blinkDots.setup();
         m_tasks.push(&blinkDots);
+
         backlight.setup();
         m_tasks.push(&backlight);
         break;
@@ -106,6 +111,18 @@ class Kernel {
         blinkTimer.setup();
         m_tasks.push(&blinkTimer);
         break;
+      case STATE_REST_TIMER_COUNTDOWN:
+        if (m_state != STATE_REST_PAUSE) restTimerCountdown.setup();
+        m_tasks.push(&restTimerCountdown);
+
+        blinkDots.setup();
+        m_tasks.push(&blinkDots);
+
+        backlight.setup();
+        m_tasks.push(&backlight);
+
+        buzzer.setup();
+        m_tasks.push(&buzzer);
       }
       m_state = state;
     }
@@ -113,7 +130,7 @@ class Kernel {
     void proposeAllTasksFinished()
     {
       switch(m_state) {
-      case STATE_AWAIT_NEXT_CYCLE:
+      case STATE_AWAIT_FIRST_CYCLE:
         break;
       case STATE_WORK_TIMER_COUNTDOWN:
         setState(STATE_REST_TIMER_COUNTDOWN);
@@ -165,7 +182,7 @@ class Kernel {
     void handlePauseSignal()
     {
       switch(m_state) {
-      case STATE_AWAIT_NEXT_CYCLE:
+      case STATE_AWAIT_FIRST_CYCLE:
         setState(STATE_WORK_TIMER_COUNTDOWN);
         break;
       case STATE_WORK_TIMER_COUNTDOWN:

@@ -40,13 +40,13 @@ byte POMO_CUSTOM_CHAR_POMODORO[8] = {
 
 class LcdTimer {
   public:
-    LcdTimer(int i2c_addr, int width, int height) 
+    LcdTimer(int i2c_addr, int width, int height, Time defaultTime = Time {25, 0}) 
       : m_lcd(i2c_addr, width, height)
       , m_startTimerTextPos(width / 2 - POMO_TIMER_TEXT_SIZE / 2 - 1)
       , m_startCyclesTextPos(0)
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
 
-      , m_time(Time {25, 0})
+      , m_time(defaultTime)
       , m_dotsVisible(true)
       , m_cycles(0)
       , m_pomodoro(0)
