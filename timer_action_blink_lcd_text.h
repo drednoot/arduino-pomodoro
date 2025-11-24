@@ -24,7 +24,7 @@ class BlinkLcdTextAction : public BlinkLcdTextTimerAction<period> {
     {
       m_state = true;
       m_lcdTimer->setTextVisible(true);
-      BlinkLcdTextAction<period>::reset();
+      BlinkLcdTextTimerAction<period>::reset();
     }
 
   private:

@@ -24,7 +24,7 @@ class BlinkBacklightAction : public BlinkBacklightTimerAction<period> {
     {
       m_state = true;
       m_lcdTimer->setBacklightEnabled(true);
-      BlinkBacklightAction<period>::reset();
+      BlinkBacklightTimerAction<period>::reset();
     }
 
   private:
