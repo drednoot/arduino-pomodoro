@@ -13,6 +13,13 @@ static const char* POMO_CYCLES_TEXT = "cycles:";
 #define POMO_CYCLES_TEXT_SIZE 10
 #define POMO_CYCLES_TEXT_Y_POS 1
 
+static const char* POMO_WORK_TEXT = "work";
+#define POMO_WORK_TEXT_SIZE 4
+static const char* POMO_REST_TEXT = "rest";
+#define POMO_REST_TEXT_SIZE 4
+#define POMO_WORK_TEXT_Y_POS 0
+#define POMO_REST_TEXT_Y_POS 0
+
 #define POMO_POMODORO_MAX_COUNT 4
 #define POMO_POMODORO_TEXT_Y_POS 1
 byte POMO_CUSTOM_CHAR_X[8] = {
@@ -50,6 +57,7 @@ class LcdTimer {
       , m_dotsVisible(true)
       , m_cycles(0)
       , m_pomodoro(0)
+      , m_isWork(true)
       , m_timerVisible(true)
       , m_textVisible(true)
     {
@@ -99,12 +107,19 @@ class LcdTimer {
       }
     }
 
+    void setIsWork(boolean isWork)
+    {
+      m_isWork = isWork;
+      drawIsWork();
+    }
+
   private:
     void drawScreen()
     {
       drawTimer();
       drawCycles();
       drawPomodoro();
+      drawIsWork();
     }
 
     void drawTimer()
@@ -173,6 +188,33 @@ class LcdTimer {
       }
     }
 
+    void drawIsWork()
+    {
+      if (m_isWork) {
+        m_lcd.setCursor(0, POMO_WORK_TEXT_Y_POS);
+
+        if (!m_textVisible) {
+          for (int i = 0; i < POMO_WORK_TEXT_SIZE; ++i) {
+            m_lcd.print(' ');
+          }
+          return;
+        }
+
+        m_lcd.print(POMO_WORK_TEXT);
+      } else {
+        m_lcd.setCursor(0, POMO_REST_TEXT_Y_POS);
+
+        if (!m_textVisible) {
+          for (int i = 0; i < POMO_REST_TEXT_SIZE; ++i) {
+            m_lcd.print(' ');
+          }
+          return;
+        }
+
+        m_lcd.print(POMO_REST_TEXT);
+      }
+    }
+
     LiquidCrystal_I2C m_lcd;
     int m_startTimerTextPos;
     int m_startCyclesTextPos;
@@ -182,6 +224,7 @@ class LcdTimer {
     boolean m_dotsVisible;
     uint8_t m_cycles;
     uint8_t m_pomodoro;
+    boolean m_isWork;
     boolean m_timerVisible;
     boolean m_textVisible;
 };

@@ -21,7 +21,7 @@
 LcdTimer lcdTimer(0x27, 16, 2, Time {0, 10});
 
 TimerCountdown<0, 10> workTimerCountdown(&lcdTimer);
-TimerCountdown<5, 0> restTimerCountdown(&lcdTimer);
+TimerCountdown<0, 10> restTimerCountdown(&lcdTimer);
 BlinkDots<800> blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
@@ -93,6 +93,7 @@ class Kernel {
       switch(state) {
       case STATE_AWAIT_FIRST_CYCLE:
         lcdTimer.setBacklightEnabled(true);
+        lcdTimer.setIsWork(true);
 
         blinkDots.setup();
         m_tasks.push(&blinkDots);
@@ -100,6 +101,8 @@ class Kernel {
       case STATE_WORK_TIMER_COUNTDOWN:
         if (m_state != STATE_WORK_PAUSE) workTimerCountdown.setup();
         m_tasks.push(&workTimerCountdown);
+
+        lcdTimer.setIsWork(true);
 
         blinkDots.setup();
         m_tasks.push(&blinkDots);
@@ -114,6 +117,8 @@ class Kernel {
       case STATE_REST_TIMER_COUNTDOWN:
         if (m_state != STATE_REST_PAUSE) restTimerCountdown.setup();
         m_tasks.push(&restTimerCountdown);
+
+        lcdTimer.setIsWork(false);
 
         blinkDots.setup();
         m_tasks.push(&blinkDots);
