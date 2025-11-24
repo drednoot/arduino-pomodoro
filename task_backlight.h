@@ -22,20 +22,20 @@ class Backlight : public Task {
 
     void sync() override
     {
-      if (m_timer.timePassed() >= noBacklightTimeout) {
-        m_done = true;
+      if (!m_done && m_timer.timePassed() >= noBacklightTimeout) {
         m_lcdTimer->setBacklightEnabled(false);
+        m_done = true;
       }
     }
 
     boolean isDone() const override
     {
-      return m_done;
+      return true;
     }
 
     boolean syncWhenDone() const override
     {
-      return false;
+      return true;
     }
 
   private:
