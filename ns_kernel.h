@@ -16,6 +16,8 @@
 #include "timer_action_blink_backlight.h"
 #include "once.h"
 
+#include <GyverPower.h>
+
 #define ARDUINO_RESET_PIN 10
 
 LcdTimer lcdTimer(0x27, 16, 2, Time {0, 10});
@@ -28,7 +30,7 @@ Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
 BlinkTimer<500> blinkTimer(&lcdTimer);
 
-PushButton<11> pushButton;
+PushButton<2> pushButton;
 
 BlinkTimerAction<300> blinkTimerAction(&lcdTimer);
 BlinkLcdTextAction<300> blinkTextAction(&lcdTimer);
@@ -99,6 +101,8 @@ class Kernel {
         lcdTimer.setBacklightEnabled(true);
         lcdTimer.setIsWork(true);
         lcdTimer.setTime(workTimerCountdown.startingTime());
+        lcdTimer.setCycles(0);
+        lcdTimer.setPomodoro(1);
 
         blinkDots.setup();
         m_tasks.push(&blinkDots);
@@ -227,7 +231,11 @@ class Kernel {
         }
         break;
       case SIG_HARD_RESET:
-        if (!buttonPushed) blinkTextAction.sync();
+        if (buttonPushed) {
+          setState(STATE_AWAIT_FIRST_CYCLE);
+        } else {
+          blinkTextAction.sync();
+        }
         break;
       case SIG_SHUTDOWN:
         if (!buttonPushed) blinkBacklightAction.sync();

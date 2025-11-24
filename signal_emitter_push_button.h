@@ -17,6 +17,7 @@ class PushButton : public SignalEmitter {
     void setup()
     {
       pinMode(pin, INPUT_PULLUP);
+      attachInterrupt(digitalPinToInterrupt(pin), isr, FALLING);
     }
 
     void sync() override
@@ -61,6 +62,10 @@ class PushButton : public SignalEmitter {
       if (timePassed < 5000) return SIG_HARD_RESET;
       if (timePassed < 10000) return SIG_SHUTDOWN;
       return SIG_FULL_RESET;
+    }
+
+    static void isr() 
+    {
     }
 
     Timer m_timer;
