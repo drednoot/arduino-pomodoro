@@ -85,32 +85,29 @@ class Kernel {
     }
 
   private:
-    void setupTasks()
-    {
-      for (uint8_t i = 0, size = m_tasks.size(); i < size; ++i) {
-        m_tasks[i]->setup();
-      }
-    }
-
     void setState(State state)
     {
       m_tasks.clear();
       switch(state) {
       case STATE_AWAIT_NEXT_CYCLE:
         lcdTimer.setBacklightEnabled(true);
+        blinkDots.setup();
         m_tasks.push(&blinkDots);
         break;
       case STATE_WORK_TIMER_COUNTDOWN:
+        if (m_state != STATE_WORK_PAUSE) workTimerCountdown.setup();
         m_tasks.push(&workTimerCountdown);
+        blinkDots.setup();
         m_tasks.push(&blinkDots);
+        backlight.setup();
         m_tasks.push(&backlight);
         break;
       case STATE_WORK_PAUSE:
+        blinkTimer.setup();
         m_tasks.push(&blinkTimer);
         break;
       }
       m_state = state;
-      setupTasks();
     }
 
     void proposeAllTasksFinished()
