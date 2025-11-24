@@ -38,6 +38,10 @@ class TimerCountdown : public Task {
       return false;
     }
 
+    void clear() override
+    {
+    }
+
   private:
     void decrementTime()
     {

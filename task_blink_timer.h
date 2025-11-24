@@ -33,6 +33,11 @@ class BlinkTimer : public Task {
       return true;
     }
 
+    void clear() override
+    {
+      m_blinkTimerAction.reset();
+    }
+
   private:
     BlinkTimerAction<period> m_blinkTimerAction;
 };

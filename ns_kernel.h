@@ -92,8 +92,7 @@ class Kernel {
   private:
     void setState(State state)
     {
-      Serial.println(state);
-      m_tasks.clear();
+      clearTasks();
       switch(state) {
       case STATE_AWAIT_FIRST_CYCLE:
         lcdTimer.setBacklightEnabled(true);
@@ -119,8 +118,12 @@ class Kernel {
         m_tasks.push(&blinkTimer);
         break;
       case STATE_REST_TIMER_COUNTDOWN:
-        if (m_state != STATE_REST_PAUSE) restTimerCountdown.setup();
+        if (m_state != STATE_REST_PAUSE) {
+          restTimerCountdown.setup();
+          buzzer.setup();
+        }
         m_tasks.push(&restTimerCountdown);
+        m_tasks.push(&buzzer);
 
         lcdTimer.setIsWork(false);
 
@@ -130,8 +133,6 @@ class Kernel {
         backlight.setup();
         m_tasks.push(&backlight);
 
-        buzzer.setup();
-        m_tasks.push(&buzzer);
         break;
       case STATE_REST_PAUSE:
         blinkTimer.setup();
@@ -139,6 +140,14 @@ class Kernel {
         break;
       }
       m_state = state;
+    }
+
+    void clearTasks()
+    {
+      for (int i = 0; i < m_tasks.size(); ++i) {
+        m_tasks[i]->clear();
+      }
+      m_tasks.clear();
     }
 
     void proposeAllTasksFinished()

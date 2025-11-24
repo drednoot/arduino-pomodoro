@@ -45,6 +45,12 @@ class Buzzer : public Task {
       return false;
     }
 
+    void clear() override
+    {
+      m_done = true;
+      noTone(pin);
+    }
+
   private:
     Timer m_timer;
     boolean m_done;

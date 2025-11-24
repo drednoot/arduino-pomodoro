@@ -38,6 +38,12 @@ class BlinkDots : public Task {
       return true;
     }
 
+    void clear() override
+    {
+      m_isDotsVisible = true;
+      m_lcdTimer->setDotsVisible(true);
+    }
+
   private:
     void blinkDots()
     {

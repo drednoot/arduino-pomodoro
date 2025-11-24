@@ -9,6 +9,7 @@ class Task {
     virtual void sync() = 0;
     virtual boolean isDone() const = 0;
     virtual boolean syncWhenDone() const = 0;
+    virtual void clear() = 0;
 };
 
 #endif // ARDUINO_POMODORO_NS_TASK_H_

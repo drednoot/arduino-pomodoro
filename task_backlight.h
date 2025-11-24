@@ -38,6 +38,11 @@ class Backlight : public Task {
       return true;
     }
 
+    void clear() override
+    {
+      m_lcdTimer->setBacklightEnabled(true);
+    }
+
   private:
     LcdTimer* m_lcdTimer;
     Timer m_timer;
