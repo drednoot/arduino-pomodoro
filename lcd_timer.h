@@ -56,7 +56,7 @@ class LcdTimer {
       , m_time(defaultTime)
       , m_dotsVisible(true)
       , m_cycles(0)
-      , m_pomodoro(0)
+      , m_pomodoro(1)
       , m_isWork(true)
       , m_timerVisible(true)
       , m_textVisible(true)
@@ -78,6 +78,28 @@ class LcdTimer {
     {
       m_time = time;
       drawTimer();
+    }
+
+    void setCycles(uint8_t cycles)
+    {
+      m_cycles = cycles;
+      drawCycles();
+    }
+
+    uint8_t cycles() const
+    {
+      return m_cycles;
+    }
+
+    void setPomodoro(uint8_t pomodoro)
+    {
+      m_pomodoro = pomodoro;
+      drawPomodoro();
+    }
+
+    uint8_t pomodoro() const
+    {
+      return m_pomodoro;
     }
 
     void setDotsVisible(boolean isVisible)

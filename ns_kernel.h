@@ -97,6 +97,7 @@ class Kernel {
       case STATE_AWAIT_FIRST_CYCLE:
         lcdTimer.setBacklightEnabled(true);
         lcdTimer.setIsWork(true);
+        lcdTimer.setTime(workTimerCountdown.startingTime());
 
         blinkDots.setup();
         m_tasks.push(&blinkDots);
@@ -138,6 +139,19 @@ class Kernel {
         blinkTimer.setup();
         m_tasks.push(&blinkTimer);
         break;
+      case STATE_AWAIT_NEXT_CYCLE:
+        lcdTimer.setIsWork(true);
+        lcdTimer.setTime(workTimerCountdown.startingTime());
+
+        lcdTimer.setCycles(lcdTimer.cycles() + 1);
+        lcdTimer.setPomodoro(lcdTimer.pomodoro() % 4 + 1);
+
+        blinkDots.setup();
+        m_tasks.push(&blinkDots);
+
+        buzzer.setup();
+        m_tasks.push(&buzzer);
+        break;
       }
       m_state = state;
     }
@@ -154,6 +168,7 @@ class Kernel {
     {
       switch(m_state) {
       case STATE_AWAIT_FIRST_CYCLE:
+      case STATE_AWAIT_NEXT_CYCLE:
       case STATE_WORK_PAUSE:
       case STATE_REST_PAUSE:
         break;
@@ -234,6 +249,8 @@ class Kernel {
       case STATE_REST_PAUSE:
         setState(STATE_REST_TIMER_COUNTDOWN);
         break;
+      case STATE_AWAIT_NEXT_CYCLE:
+        setState(STATE_WORK_TIMER_COUNTDOWN);
       }
     }
 

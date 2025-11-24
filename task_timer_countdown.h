@@ -42,6 +42,11 @@ class TimerCountdown : public Task {
     {
     }
 
+    Time startingTime() const
+    {
+      return Time {minutes, seconds};
+    }
+
   private:
     void decrementTime()
     {
