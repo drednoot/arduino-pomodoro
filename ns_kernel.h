@@ -50,6 +50,7 @@ class Kernel {
   public:
     Kernel()
       : m_state { STATE_AWAIT_FIRST_CYCLE }
+      , m_stopTasks { false }
     {
     }
 
@@ -71,6 +72,8 @@ class Kernel {
         m_signalEmitters[i]->sync();
         handleSignals(m_signalEmitters[i]);
       }
+
+      if (m_stopTasks) return;
 
       uint8_t doneCount = 0;
       for (uint8_t i = 0, size = m_tasks.size(); i < size; ++i) {
@@ -146,6 +149,8 @@ class Kernel {
     void handleSignals(SignalEmitter* signalEmitter)
     {
       Signals toHandle = signalEmitter->signals();
+      if (toHandle == SIG_NO_SIGNAL) return;
+
       boolean buttonPushed = toHandle & SIG_BUTTON_PUSHED;
       toHandle &= ~SIG_BUTTON_PUSHED;
 
@@ -172,12 +177,19 @@ class Kernel {
         break;
       }
 
+      if (buttonPushed) {
+        m_stopTasks = false;
+        resetEffectTimers(toHandle, true);
+      } else {
+        m_stopTasks = true;
+      }
+
       signalEmitter->setSignalsHandled();
     }
 
-    void resetEffectTimers(Signals signals)
+    void resetEffectTimers(Signals signals, boolean forced = false)
     {
-      if (m_signalsOnce.set(signals)) {
+      if (forced || m_signalsOnce.set(signals)) {
         blinkTimerAction.reset();
         blinkTextAction.reset();
         blinkBacklightAction.reset();
@@ -202,7 +214,8 @@ class Kernel {
     Array<Task*, maxTasks> m_tasks;
     Array<SignalEmitter*, maxSignalEmitters> m_signalEmitters;
     State m_state;
-    Once<uint16_t> m_signalsOnce;
+    Once<Signals> m_signalsOnce;
+    boolean m_stopTasks;
 };
 
 #endif // ARDUINO_POMODORO_NS_KERNEL_H_
