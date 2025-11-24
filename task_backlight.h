@@ -17,6 +17,7 @@ class Backlight : public Task {
     {
       m_timer.start();
       m_done = false;
+      m_lcdTimer->setBacklightEnabled(true);
     }
 
     void sync() override
