@@ -259,8 +259,10 @@ class Kernel {
       if (buttonPushed) {
         m_stopTasks = false;
         resetEffectTimers(toHandle, true);
+        setSleepTimer(m_state);
       } else {
         m_stopTasks = true;
+        sleepTimer.stop();
       }
 
       signalEmitter->setSignalsHandled();
