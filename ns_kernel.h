@@ -327,6 +327,7 @@ class Kernel {
       pushButton.attachIsr(&wakeup);
       lcdTimer.setPower(false);
       stateBeforeSleep = m_state;
+      pushButton.setWakeupGrace();
       power.sleep(SLEEP_FOREVER);
       wakeup();
     }

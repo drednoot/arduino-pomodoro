@@ -11,6 +11,7 @@ class PushButton : public SignalEmitter {
     PushButton()
       : m_emittingSignals(SIG_NO_SIGNAL)
       , m_wasPushed(false)
+      , m_grace(false)
     {
     }
 
@@ -63,10 +64,17 @@ class PushButton : public SignalEmitter {
       detachInterrupt(digitalPinToInterrupt(pin));
     }
 
+    void setWakeupGrace()
+    {
+      m_grace = true;
+    }
+
   private:
     Signal signalAccordingToTimePassed()
     {
       uint32_t timePassed = m_timer.timePassed();
+      if (timePassed < 100 && m_grace) return SIG_NO_SIGNAL;
+      m_grace = false;
       if (timePassed < 1000) return SIG_PAUSE;
       if (timePassed < 3000) return SIG_TIMER_RESET;
       if (timePassed < 5000) return SIG_HARD_RESET;
@@ -81,6 +89,7 @@ class PushButton : public SignalEmitter {
     Timer m_timer;
     Signals m_emittingSignals;
     boolean m_wasPushed;
+    boolean m_grace;
 };
 
 
