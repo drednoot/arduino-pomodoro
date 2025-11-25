@@ -47,11 +47,13 @@ byte POMO_CUSTOM_CHAR_POMODORO[8] = {
 
 class LcdTimer {
   public:
-    LcdTimer(int i2c_addr, int width, int height, Time defaultTime = Time {25, 0}) 
+    LcdTimer(int i2c_addr, uint8_t width, uint8_t height, Time defaultTime = Time {25, 0}) 
       : m_lcd(i2c_addr, width, height)
       , m_startTimerTextPos(width / 2 - POMO_TIMER_TEXT_SIZE / 2 - 1)
       , m_startCyclesTextPos(0)
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
+      , m_width(width)
+      , m_height(height)
 
       , m_time(defaultTime)
       , m_dotsVisible(true)
@@ -133,6 +135,17 @@ class LcdTimer {
     {
       m_isWork = isWork;
       drawIsWork();
+    }
+
+    void setPower(boolean isOn)
+    {
+      if (isOn) {
+        m_lcd.display();
+        m_lcd.backlight();
+      } else {
+        m_lcd.noDisplay();
+        m_lcd.noBacklight();
+      }
     }
 
   private:
@@ -241,6 +254,8 @@ class LcdTimer {
     int m_startTimerTextPos;
     int m_startCyclesTextPos;
     int m_startPomodoroTextPos;
+    uint8_t m_width;
+    uint8_t m_height;
 
     Time m_time;
     boolean m_dotsVisible;

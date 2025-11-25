@@ -8,10 +8,10 @@ enum Signal {
   SIG_HARD_RESET = 0x4, // cycles, pomodoro reset
   SIG_SHUTDOWN = 0x8, // arduino sleep
   SIG_FULL_RESET = 0x10, // arduino restart
-  SIG_BUTTON_PUSHED = 0x20, // button pushed
+  SIG_ACTIVATE = 0x20, // button pushed
 
   SIG_MIN = SIG_PAUSE,
-  SIG_MAX = SIG_BUTTON_PUSHED,
+  SIG_MAX = SIG_ACTIVATE,
 };
 
 using Signals = uint16_t;

@@ -30,7 +30,7 @@ class PushButton : public SignalEmitter {
         if (pushed) {
           m_timer.start();
         } else {
-          signal |= SIG_BUTTON_PUSHED | signalAccordingToTimePassed();
+          signal |= SIG_ACTIVATE | signalAccordingToTimePassed();
         }
       }
 
@@ -51,6 +51,16 @@ class PushButton : public SignalEmitter {
     void setSignalsHandled() override
     {
       m_emittingSignals = SIG_NO_SIGNAL;
+    }
+
+    void attachIsr(void(*overwrite)())
+    {
+      attachInterrupt(digitalPinToInterrupt(pin), overwrite, FALLING);
+    }
+
+    void detachIsr()
+    {
+      detachInterrupt(digitalPinToInterrupt(pin));
     }
 
   private:

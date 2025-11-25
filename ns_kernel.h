@@ -11,6 +11,7 @@
 #include "task_backlight.h"
 #include "task_blink_timer.h"
 #include "signal_emitter_push_button.h"
+#include "signal_emitter_sleep_timer.h"
 #include "timer_action_blink_timer.h"
 #include "timer_action_blink_lcd_text.h"
 #include "timer_action_blink_backlight.h"
@@ -31,13 +32,14 @@ Backlight<10000> backlight(&lcdTimer);
 BlinkTimer<500> blinkTimer(&lcdTimer);
 
 PushButton<2> pushButton;
+SleepTimer<2000> sleepTimer;
 
 BlinkTimerAction<300> blinkTimerAction(&lcdTimer);
 BlinkLcdTextAction<300> blinkTextAction(&lcdTimer);
 BlinkBacklightAction<300> blinkBacklightAction(&lcdTimer);
 
 const static uint8_t maxTasks = 4;
-const static uint8_t maxSignalEmitters = 1;
+const static uint8_t maxSignalEmitters = 2;
 
 enum State {
   STATE_AWAIT_FIRST_CYCLE = 0,
@@ -46,8 +48,9 @@ enum State {
   STATE_REST_TIMER_COUNTDOWN,
   STATE_WORK_PAUSE,
   STATE_REST_PAUSE,
-  // STATE_SLEEP, possibly?
 };
+
+static State stateBeforeSleep;
 
 class Kernel {
   public:
@@ -65,6 +68,7 @@ class Kernel {
       lcdTimer.setup();
       pushButton.setup();
       m_signalEmitters.push(&pushButton);
+      m_signalEmitters.push(&sleepTimer);
 
       setState(m_state);
     }
@@ -148,7 +152,6 @@ class Kernel {
 
         backlight.setup();
         m_tasks.push(&backlight);
-
         break;
       case STATE_REST_PAUSE:
         blinkTimer.setup();
@@ -168,6 +171,7 @@ class Kernel {
         m_tasks.push(&buzzer);
         break;
       }
+      setSleepTimer(state);
       m_state = state;
     }
 
@@ -201,8 +205,8 @@ class Kernel {
       Signals toHandle = signalEmitter->signals();
       if (toHandle == SIG_NO_SIGNAL) return;
 
-      boolean buttonPushed = toHandle & SIG_BUTTON_PUSHED;
-      toHandle &= ~SIG_BUTTON_PUSHED;
+      boolean buttonPushed = toHandle & SIG_ACTIVATE;
+      toHandle &= ~SIG_ACTIVATE;
 
       resetEffectTimers(toHandle);
 
@@ -238,12 +242,16 @@ class Kernel {
         }
         break;
       case SIG_SHUTDOWN:
-        if (!buttonPushed) blinkBacklightAction.sync();
+        if (buttonPushed) {
+          sleep();
+        } else {
+          blinkBacklightAction.sync();
+        }
         break;
       case SIG_FULL_RESET:
         digitalWrite(ARDUINO_RESET_PIN, LOW);
         break;
-      case SIG_BUTTON_PUSHED:
+      case SIG_ACTIVATE:
       case SIG_NO_SIGNAL:
         break;
       }
@@ -288,6 +296,47 @@ class Kernel {
       case STATE_AWAIT_NEXT_CYCLE:
         setState(STATE_WORK_TIMER_COUNTDOWN);
       }
+    }
+
+    static void setSleepTimer(State state)
+    {
+      switch (state) {
+      case STATE_AWAIT_FIRST_CYCLE:
+        sleepTimer.reset();
+        break;
+      case STATE_AWAIT_NEXT_CYCLE:
+        sleepTimer.reset();
+        break;
+      case STATE_WORK_TIMER_COUNTDOWN:
+        sleepTimer.stop();
+        break;
+      case STATE_REST_TIMER_COUNTDOWN:
+        sleepTimer.stop();
+        break;
+      case STATE_WORK_PAUSE:
+        sleepTimer.reset();
+        break;
+      case STATE_REST_PAUSE:
+        sleepTimer.reset();
+        break;
+      }
+    }
+
+    void sleep()
+    {
+      pushButton.attachIsr(&wakeup);
+      lcdTimer.setPower(false);
+      stateBeforeSleep = m_state;
+      power.sleep(SLEEP_FOREVER);
+      wakeup();
+    }
+
+    static void wakeup()
+    {
+      power.wakeUp();
+      pushButton.detachIsr();
+      lcdTimer.setPower(true);
+      setSleepTimer(stateBeforeSleep);
     }
 
     Array<Task*, maxTasks> m_tasks;
