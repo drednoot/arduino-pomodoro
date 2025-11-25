@@ -21,18 +21,18 @@
 
 #define ARDUINO_RESET_PIN 10
 
-LcdTimer lcdTimer(0x27, 16, 2, Time {0, 10});
+LcdTimer lcdTimer(0x27, 16, 2, Time {25, 0});
 
-TimerCountdown<0, 10> workTimerCountdown(&lcdTimer);
-TimerCountdown<0, 10> restTimerCountdown(&lcdTimer);
-TimerCountdown<0, 15> longRestTimerCountdown(&lcdTimer);
+TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
+TimerCountdown<5, 0> restTimerCountdown(&lcdTimer);
+TimerCountdown<15, 0> longRestTimerCountdown(&lcdTimer);
 BlinkDots<800> blinkDots(&lcdTimer);
 Buzzer<12, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
 BlinkTimer<500> blinkTimer(&lcdTimer);
 
 PushButton<2> pushButton;
-SleepTimer<2000> sleepTimer;
+SleepTimer<10000> sleepTimer;
 
 BlinkTimerAction<300> blinkTimerAction(&lcdTimer);
 BlinkLcdTextAction<300> blinkTextAction(&lcdTimer);
