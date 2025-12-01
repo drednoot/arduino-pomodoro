@@ -3,15 +3,33 @@
 
 #include "time.h"
 
+#ifdef ADAFRUIT_SSD1306
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#else
 #include <LiquidCrystal_I2C.h>
+#endif
+
+#ifdef ADAFRUIT_SSD1306
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define TEXT_SIZE 2
+#define PIXEL_TO_OFFSET_X_RATIO (8 * TEXT_SIZE)
+#define PIXEL_TO_OFFSET_Y_RATIO (10 * TEXT_SIZE)
+#else
+#define PIXEL_TO_OFFSET_X_RATIO 1
+#define PIXEL_TO_OFFSET_Y_RATIO 1
+#endif
 
 #define POMO_TIMER_TEXT_COLON ':'
 #define POMO_TIMER_TEXT_SIZE 5
-#define POMO_TIMER_TEXT_Y_POS 0
+#define POMO_TIMER_TEXT_Y_POS 1
 
 static const char* POMO_CYCLES_TEXT = "cycles:";
 #define POMO_CYCLES_TEXT_SIZE 10
-#define POMO_CYCLES_TEXT_Y_POS 1
+#define POMO_CYCLES_TEXT_Y_POS 2
 
 static const char* POMO_WORK_TEXT = "work";
 #define POMO_WORK_TEXT_SIZE 4
@@ -21,7 +39,7 @@ static const char* POMO_REST_TEXT = "rest";
 #define POMO_REST_TEXT_Y_POS 0
 
 #define POMO_POMODORO_MAX_COUNT 4
-#define POMO_POMODORO_TEXT_Y_POS 1
+#define POMO_POMODORO_TEXT_Y_POS 0
 byte POMO_CUSTOM_CHAR_X[8] = {
 	0b00000,
 	0b00000,
@@ -48,7 +66,12 @@ byte POMO_CUSTOM_CHAR_POMODORO[8] = {
 class LcdTimer {
   public:
     LcdTimer(int i2c_addr, uint8_t width, uint8_t height, Time defaultTime = Time {25, 0}) 
+#ifdef ADAFRUIT_SSD1306
+      : m_lcd(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1)
+      , m_i2cAddr(i2c_addr)
+#else
       : m_lcd(i2c_addr, width, height)
+#endif
       , m_startTimerTextPos(width / 2 - POMO_TIMER_TEXT_SIZE / 2 - 1)
       , m_startCyclesTextPos(0)
       , m_startPomodoroTextPos(width - POMO_POMODORO_MAX_COUNT)
@@ -66,12 +89,19 @@ class LcdTimer {
     }
     void setup()
     {
+#ifdef ADAFRUIT_SSD1306
+      m_lcd.begin(SSD1306_SWITCHCAPVCC, m_i2cAddr);
+      m_lcd.setTextSize(TEXT_SIZE);
+      m_lcd.setTextColor(SSD1306_WHITE);
+#else
       m_lcd.init();
-      m_lcd.backlight();
-      m_lcd.clear();
+
+      setBacklightEnabled(true);
 
       m_lcd.createChar(POMO_CUSTOM_CHAR_X_IDX, POMO_CUSTOM_CHAR_X);
       m_lcd.createChar(POMO_CUSTOM_CHAR_POMODORO_IDX, POMO_CUSTOM_CHAR_POMODORO);
+#endif
+      clear();
 
       drawScreen();
     }
@@ -124,11 +154,32 @@ class LcdTimer {
 
     void setBacklightEnabled(boolean isEnabled)
     {
+#ifdef ADAFRUIT_SSD1306
+      (void)isEnabled;
+#else
       if (isEnabled) {
         m_lcd.backlight();
       } else {
         m_lcd.noBacklight();
       }
+#endif
+    }
+
+    void setDisplayEnabled(boolean isEnabled)
+    {
+#ifdef ADAFRUIT_SSD1306
+      if (isEnabled) {
+        m_lcd.ssd1306_command(SSD1306_DISPLAYON);
+      } else {
+        m_lcd.ssd1306_command(SSD1306_DISPLAYOFF);
+      }
+#else
+      if (isEnabled) {
+        m_lcd.display();
+      } else {
+        m_lcd.noDisplay();
+      }
+#endif
     }
 
     void setIsWork(boolean isWork)
@@ -139,13 +190,8 @@ class LcdTimer {
 
     void setPower(boolean isOn)
     {
-      if (isOn) {
-        m_lcd.display();
-        m_lcd.backlight();
-      } else {
-        m_lcd.noDisplay();
-        m_lcd.noBacklight();
-      }
+      setDisplayEnabled(isOn);
+      setBacklightEnabled(isOn);
     }
 
   private:
@@ -159,98 +205,152 @@ class LcdTimer {
 
     void drawTimer()
     {
-      m_lcd.setCursor(m_startTimerTextPos, POMO_TIMER_TEXT_Y_POS);
+      setCursor(m_startTimerTextPos, POMO_TIMER_TEXT_Y_POS);
       printTimer();
+      upload();
     }
     void printTimer()
     {
       if (!m_timerVisible || !m_textVisible) {
         for (int i = 0; i < POMO_TIMER_TEXT_SIZE; ++i) {
-          m_lcd.print(' ');
+          print(' ');
         }
         return;
       }
 
       printWithPadding(m_time.minutes, ' ');
       if (m_dotsVisible) {
-        m_lcd.print(POMO_TIMER_TEXT_COLON);
+        print(POMO_TIMER_TEXT_COLON);
       } else {
-        m_lcd.print(' ');
+        print(' ');
       }
       printWithPadding(m_time.seconds, '0');
     }
     void printWithPadding(uint8_t n, char padding)
     {
       if (n >= 10) {
-        m_lcd.print(n % 100);
+        print(n % 100);
       } else {
-        m_lcd.print(padding);
-        m_lcd.print(n);
+        print(padding);
+        print(n);
       }
     }
 
     void drawCycles()
     {
-      m_lcd.setCursor(m_startCyclesTextPos, POMO_CYCLES_TEXT_Y_POS);
+      setCursor(m_startCyclesTextPos, POMO_CYCLES_TEXT_Y_POS);
 
       if (!m_textVisible) {
         for (int i = 0; i < POMO_CYCLES_TEXT_SIZE; ++i) {
-          m_lcd.print(' ');
+          print(' ');
         }
         return;
       }
 
-      m_lcd.print(POMO_CYCLES_TEXT);
-      m_lcd.print(m_cycles);
+      print(POMO_CYCLES_TEXT);
+      print(m_cycles);
+      upload();
     }
 
     void drawPomodoro()
     {
-      m_lcd.setCursor(m_startPomodoroTextPos, POMO_POMODORO_TEXT_Y_POS);
+      setCursor(m_startPomodoroTextPos, POMO_POMODORO_TEXT_Y_POS);
 
       if (!m_textVisible) {
         for (int i = 0; i < POMO_POMODORO_MAX_COUNT; ++i) {
-          m_lcd.print(' ');
+          print(' ');
         }
         return;
       }
 
       for (int i = 0; i < m_pomodoro; ++i) {
-        m_lcd.write((byte)POMO_CUSTOM_CHAR_POMODORO_IDX);
+        // m_lcd.write((byte)POMO_CUSTOM_CHAR_POMODORO_IDX);
       }
       for (int i = 0; i < POMO_POMODORO_MAX_COUNT - m_pomodoro; ++i) {
-        m_lcd.write((byte)POMO_CUSTOM_CHAR_X_IDX);
+        // m_lcd.write((byte)POMO_CUSTOM_CHAR_X_IDX);
       }
+      upload();
     }
 
     void drawIsWork()
     {
       if (m_isWork) {
-        m_lcd.setCursor(0, POMO_WORK_TEXT_Y_POS);
+        setCursor(0, POMO_WORK_TEXT_Y_POS);
 
         if (!m_textVisible) {
           for (int i = 0; i < POMO_WORK_TEXT_SIZE; ++i) {
-            m_lcd.print(' ');
+            print(' ');
           }
           return;
         }
 
-        m_lcd.print(POMO_WORK_TEXT);
+        print(POMO_WORK_TEXT);
       } else {
-        m_lcd.setCursor(0, POMO_REST_TEXT_Y_POS);
+        setCursor(0, POMO_REST_TEXT_Y_POS);
 
         if (!m_textVisible) {
           for (int i = 0; i < POMO_REST_TEXT_SIZE; ++i) {
-            m_lcd.print(' ');
+            print(' ');
           }
           return;
         }
 
-        m_lcd.print(POMO_REST_TEXT);
+        print(POMO_REST_TEXT);
+      }
+      upload();
+    }
+
+    void clear()
+    {
+#ifdef ADAFRUIT_SSD1306
+      m_lcd.clearDisplay();
+#else
+      m_lcd.clear();
+#endif
+    }
+
+    void upload()
+    {
+#ifdef ADAFRUIT_SSD1306
+      m_lcd.display();
+#endif
+    }
+
+    void setCursor(uint8_t x, uint8_t y)
+    {
+      m_lcd.setCursor(x * PIXEL_TO_OFFSET_X_RATIO, y * PIXEL_TO_OFFSET_Y_RATIO);
+    }
+
+    void print(char ch)
+    {
+#ifdef ADAFRUIT_SSD1306
+      m_lcd.fillRect(
+          m_lcd.getCursorX(), m_lcd.getCursorY(),
+          PIXEL_TO_OFFSET_X_RATIO, PIXEL_TO_OFFSET_Y_RATIO,
+          SSD1306_BLACK);
+#endif
+      m_lcd.print(ch);
+    }
+
+    void print(const char* ch)
+    {
+      while (*ch) {
+        print(*ch);
+        ++ch;
       }
     }
 
+    void print(int dig)
+    {
+      print(static_cast<char>('0' + dig));
+    }
+
+#ifdef ADAFRUIT_SSD1306
+    Adafruit_SSD1306 m_lcd;
+    int m_i2cAddr;
+#else
     LiquidCrystal_I2C m_lcd;
+#endif
     int m_startTimerTextPos;
     int m_startCyclesTextPos;
     int m_startPomodoroTextPos;

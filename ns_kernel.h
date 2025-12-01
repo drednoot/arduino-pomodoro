@@ -1,6 +1,9 @@
 #ifndef ARDUINO_POMODORO_NS_KERNEL_H_
 #define ARDUINO_POMODORO_NS_KERNEL_H_
 
+#define ADAFRUIT_SSD1306
+#include "lcd_timer.h"
+
 #include "array.h"
 #include "time.h"
 #include "ns_task.h"
@@ -21,13 +24,13 @@
 
 #define ARDUINO_RESET_PIN 10
 
-LcdTimer lcdTimer(0x27, 16, 2, Time {25, 0});
+LcdTimer lcdTimer(0x3C, 10, 4, Time {25, 0});
 
 TimerCountdown<25, 0> workTimerCountdown(&lcdTimer);
 TimerCountdown<5, 0> restTimerCountdown(&lcdTimer);
 TimerCountdown<15, 0> longRestTimerCountdown(&lcdTimer);
 BlinkDots<800> blinkDots(&lcdTimer);
-Buzzer<12, 150, 5000, 440> buzzer;
+Buzzer<3, 150, 5000, 440> buzzer;
 Backlight<10000> backlight(&lcdTimer);
 BlinkTimer<500> blinkTimer(&lcdTimer);
 
