@@ -16,7 +16,7 @@
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define TEXT_SIZE 2
-#define PIXEL_TO_OFFSET_X_RATIO (8 * TEXT_SIZE)
+#define PIXEL_TO_OFFSET_X_RATIO (6 * TEXT_SIZE)
 #define PIXEL_TO_OFFSET_Y_RATIO (10 * TEXT_SIZE)
 #else
 #define PIXEL_TO_OFFSET_X_RATIO 1
@@ -40,7 +40,53 @@ static const char* POMO_REST_TEXT = "rest";
 
 #define POMO_POMODORO_MAX_COUNT 4
 #define POMO_POMODORO_TEXT_Y_POS 0
-byte POMO_CUSTOM_CHAR_X[8] = {
+#ifdef ADAFRUIT_SSD1306
+static const byte PROGMEM POMO_CUSTOM_CHAR_X[] = {
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00001100, 0b00110000,
+	0b00001110, 0b01110000,
+	0b00000111, 0b11100000,
+	0b00000001, 0b10000000,
+	0b00000001, 0b10000000,
+	0b00000111, 0b11100000,
+	0b00001110, 0b01110000,
+	0b00001100, 0b00110000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000
+};
+static const byte PROGMEM POMO_CUSTOM_CHAR_POMODORO[] = {
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b01000000,
+	0b00000000, 0b11110000,
+	0b00000011, 0b11000000,
+	0b00011011, 0b00000000,
+	0b01111111, 0b00000000,
+	0b11111111, 0b10000000,
+	0b11111111, 0b10000000,
+	0b11111101, 0b10000000,
+	0b11111001, 0b10000000,
+	0b01111111, 0b00000000,
+	0b00011000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000,
+	0b00000000, 0b00000000
+};
+#else
+static const byte PROGMEM POMO_CUSTOM_CHAR_X[8] = {
 	0b00000,
 	0b00000,
 	0b00000,
@@ -51,7 +97,7 @@ byte POMO_CUSTOM_CHAR_X[8] = {
 	0b00000
 };
 #define POMO_CUSTOM_CHAR_X_IDX 0
-byte POMO_CUSTOM_CHAR_POMODORO[8] = {
+static const byte PROGMEM POMO_CUSTOM_CHAR_POMODORO[8] = {
   0b00000,
 	0b00000,
 	0b00011,
@@ -62,6 +108,7 @@ byte POMO_CUSTOM_CHAR_POMODORO[8] = {
 	0b00000
 };
 #define POMO_CUSTOM_CHAR_POMODORO_IDX 1
+#endif
 
 class LcdTimer {
   public:
@@ -95,12 +142,12 @@ class LcdTimer {
       m_lcd.setTextColor(SSD1306_WHITE);
 #else
       m_lcd.init();
-
-      setBacklightEnabled(true);
-
       m_lcd.createChar(POMO_CUSTOM_CHAR_X_IDX, POMO_CUSTOM_CHAR_X);
       m_lcd.createChar(POMO_CUSTOM_CHAR_POMODORO_IDX, POMO_CUSTOM_CHAR_POMODORO);
+
+      setBacklightEnabled(true);
 #endif
+
       clear();
 
       drawScreen();
@@ -264,10 +311,10 @@ class LcdTimer {
       }
 
       for (int i = 0; i < m_pomodoro; ++i) {
-        // m_lcd.write((byte)POMO_CUSTOM_CHAR_POMODORO_IDX);
+        drawPomodoroChar();
       }
       for (int i = 0; i < POMO_POMODORO_MAX_COUNT - m_pomodoro; ++i) {
-        // m_lcd.write((byte)POMO_CUSTOM_CHAR_X_IDX);
+        drawXChar();
       }
       upload();
     }
@@ -352,6 +399,46 @@ class LcdTimer {
       for (; divisor > 0; divisor /= 10) {
         print(static_cast<char>('0' + (num / divisor) % 10));
       }
+    }
+
+    void drawPomodoroChar()
+    {
+#ifdef ADAFRUIT_SSD1306
+      m_lcd.fillRect(
+          m_lcd.getCursorX(), m_lcd.getCursorY(),
+          PIXEL_TO_OFFSET_X_RATIO, PIXEL_TO_OFFSET_Y_RATIO,
+          SSD1306_BLACK);
+      m_lcd.drawBitmap(
+          m_lcd.getCursorX(), m_lcd.getCursorY(),
+          POMO_CUSTOM_CHAR_POMODORO,
+          PIXEL_TO_OFFSET_X_RATIO, PIXEL_TO_OFFSET_Y_RATIO,
+          SSD1306_WHITE);
+      m_lcd.setCursor(
+          m_lcd.getCursorX() + PIXEL_TO_OFFSET_X_RATIO,
+          m_lcd.getCursorY());
+#else
+      m_lcd.write((byte)POMO_CUSTOM_CHAR_POMODORO_IDX);
+#endif
+    }
+
+    void drawXChar()
+    {
+#ifdef ADAFRUIT_SSD1306
+      m_lcd.fillRect(
+          m_lcd.getCursorX(), m_lcd.getCursorY(),
+          PIXEL_TO_OFFSET_X_RATIO, PIXEL_TO_OFFSET_Y_RATIO,
+          SSD1306_BLACK);
+      m_lcd.drawBitmap(
+          m_lcd.getCursorX(), m_lcd.getCursorY(),
+          POMO_CUSTOM_CHAR_X,
+          PIXEL_TO_OFFSET_X_RATIO, PIXEL_TO_OFFSET_Y_RATIO,
+          SSD1306_WHITE);
+      m_lcd.setCursor(
+          m_lcd.getCursorX() + PIXEL_TO_OFFSET_X_RATIO,
+          m_lcd.getCursorY());
+#else
+      m_lcd.write((byte)POMO_CUSTOM_CHAR_X_IDX);
+#endif
     }
 
 #ifdef ADAFRUIT_SSD1306
