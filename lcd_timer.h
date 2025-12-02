@@ -340,9 +340,18 @@ class LcdTimer {
       }
     }
 
-    void print(int dig)
+    void print(int num)
     {
-      print(static_cast<char>('0' + dig));
+      uint8_t divisor = 1;
+      uint8_t numTest = num;
+      while (numTest > 9) {
+        divisor *= 10;
+        numTest /= 10;
+      }
+      
+      for (; divisor > 0; divisor /= 10) {
+        print(static_cast<char>('0' + (num / divisor) % 10));
+      }
     }
 
 #ifdef ADAFRUIT_SSD1306
